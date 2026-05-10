@@ -1,0 +1,2930 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediCare Pro — Clinic Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <!-- GSAP — premium animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <!-- Typed.js — typewriter effect -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.1.0/typed.umd.js"></script>
+    <!-- CountUp.js — animated numbers -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.8.0/countUp.umd.js"></script>
+    <!-- Animate.css -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
+    <link rel="stylesheet" href="css.css" />
+    <!-- 🛡️ VALIDATORS LIBRARY (LOAD FIRST) -->
+    <script src="lib/validators.js" defer></script>
+    <script src="api.js" defer></script>
+    <script src="ui.js" defer></script>
+    <script src="main.js" defer></script>
+    <script src="auth.js" defer></script>
+    <script src="appointments.js" defer></script>
+    <script src="patients.js" defer></script>
+    <script src="consultation.js" defer></script>
+    <script src="profile.js" defer></script>
+  </head>
+  <body>
+    <!-- Scroll Progress Bar -->
+    <div id="scrollProgress"></div>
+    <!-- Morphing Blobs -->
+    <div class="blob-bg blob-1"></div>
+    <div class="blob-bg blob-2"></div>
+    <div class="blob-bg blob-3"></div>
+
+    <!-- ============ AUTH: LOGIN ============ -->
+    <div id="loginPage">
+      <div class="auth-page">
+        <div class="grid-bg"></div>
+        <div class="auth-particles" id="loginParticles"></div>
+        <div class="auth-card">
+          <div class="auth-logo">
+            <div class="auth-logo-icon">🏥</div>
+            <h1>
+              MediCare <em style="color: #0ea5e9; font-style: normal">Pro</em>
+            </h1>
+            <p>Clinic Management System</p>
+          </div>
+          <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input
+                type="email"
+                class="form-input"
+                id="loginEmail"
+                placeholder="doctor@clinic.com"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input
+                type="password"
+                class="form-input"
+                id="loginPassword"
+                placeholder="Enter your password"
+                required
+              />
+              <div
+                id="loginError"
+                style="
+                  color: #ef4444;
+                  font-size: 12px;
+                  margin-top: 6px;
+                  display: none;
+                "
+              ></div>
+            </div>
+            <button type="submit" class="auth-btn">Sign In →</button>
+          </form>
+          <div class="auth-footer">
+            <p>
+              Don't have an account?
+              <span class="auth-link" onclick="showPage('signup')"
+                >Create Account</span
+              >
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ AUTH: SIGNUP ============ -->
+    <div id="signupPage" class="hidden">
+      <div class="auth-page">
+        <div class="grid-bg"></div>
+        <div class="auth-particles" id="signupParticles"></div>
+        <div class="auth-card wide">
+          <div class="auth-logo">
+            <div class="auth-logo-icon">👨‍⚕️</div>
+            <h1>Doctor Registration</h1>
+            <p>Create your account and start managing your clinic</p>
+          </div>
+          <form id="signupForm" onsubmit="handleSignup(event)">
+            <div
+              class="section-title"
+              style="color: #0ea5e9; border-color: rgba(14, 165, 233, 0.2)"
+            >
+              Personal Information
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Full Name *</label>
+                <input
+                  type="text"
+                  class="form-input"
+                  id="sName"
+                  name="fullName"
+                  placeholder="Doctor name"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email Address *</label>
+                <input
+                  type="email"
+                  class="form-input"
+                  id="sEmail"
+                  name="email"
+                  placeholder="doctor@clinic.com"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password *</label>
+                <input
+                  type="password"
+                  class="form-input"
+                  id="sPassword"
+                  name="password"
+                  placeholder="Min. 8 characters"
+                  required
+                  oninput="checkPasswordStrength(this.value)"
+                />
+                <div class="password-strength">
+                  <div class="strength-bar" id="strengthBar"></div>
+                </div>
+                <div class="strength-text" id="strengthText"></div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone Number *</label>
+                <input
+                  type="tel"
+                  class="form-input"
+                  id="sPhone"
+                  name="phone"
+                  placeholder="+20 100 000 0000"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Governorate *</label>
+                <select
+                  class="form-select"
+                  id="sGovernorate"
+                  name="city"
+                  required
+                >
+                  <option value="">-- Select Governorate --</option>
+                  <option>Cairo</option>
+                  <option>Alexandria</option>
+                  <option>Giza</option>
+                  <option>Aswan</option>
+                  <option>Asyut</option>
+                  <option>Beheira</option>
+                  <option>Beni Suef</option>
+                  <option>Dakahlia</option>
+                  <option>Damietta</option>
+                  <option>Faiyum</option>
+                  <option>Gharbia</option>
+                  <option>Ismailia</option>
+                  <option>Kafr El Sheikh</option>
+                  <option>Luxor</option>
+                  <option>Matrouh</option>
+                  <option>Minya</option>
+                  <option>Monufia</option>
+                  <option>New Valley</option>
+                  <option>North Sinai</option>
+                  <option>Port Said</option>
+                  <option>Qalyubia</option>
+                  <option>Qena</option>
+                  <option>Red Sea</option>
+                  <option>Sharqia</option>
+                  <option>Sohag</option>
+                  <option>South Sinai</option>
+                  <option>Suez</option>
+                </select>
+              </div>
+            </div>
+            <div
+              class="section-title"
+              style="color: #0ea5e9; border-color: rgba(14, 165, 233, 0.2)"
+            >
+              Professional Details
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Medical Specialty *</label>
+                <select
+                  class="form-select"
+                  id="sSpecialty"
+                  name="specialtyName"
+                  required
+                >
+                  <option value="">-- Select Specialty --</option>
+                  <option>Internal Medicine</option>
+                  <option>Dermatology</option>
+                  <option>Psychiatry</option>
+                  <option>Pediatrics</option>
+                  <option>Orthopedics</option>
+                  <option>ENT</option>
+                  <option>Dentistry</option>
+                  <option>Ophthalmology</option>
+                  <option>Gynecology</option>
+                  <option>Neurology</option>
+                  <option>Urology</option>
+                  <option>Cardiology</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">University Certificate *</label>
+                <input
+                  type="text"
+                  class="form-input"
+                  id="sCertificate"
+                  name="certificate"
+                  placeholder="e.g., MD - Cairo University"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">National ID (14 digits) *</label>
+                <input
+                  type="text"
+                  class="form-input"
+                  id="sNationalId"
+                  name="nationalNumber"
+                  placeholder="12345678901234"
+                  required
+                  maxlength="14"
+                  pattern="[0-9]{14}"
+                  inputmode="numeric"
+                />
+                <div id="nationalIdError" class="validation-error hidden">
+                  Must be exactly 14 digits
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Medical Syndicate ID *</label>
+                <input
+                  type="text"
+                  class="form-input"
+                  id="sLicense"
+                  name="licenseNumber"
+                  placeholder="MS-12345678"
+                  required
+                />
+              </div>
+            </div>
+            <button type="submit" class="auth-btn">Create Account →</button>
+          </form>
+          <div class="auth-footer">
+            <p>
+              Already have an account?
+              <span class="auth-link" onclick="showPage('login')">Sign In</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ MAIN APP ============ -->
+    <div id="mainApp" class="hidden">
+      <div class="app-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+          <div class="sidebar-brand">
+            <div style="display: flex; align-items: center">
+              <div class="brand-logo">🏥</div>
+              <div>
+                <h1>Medi<span>Care</span> Pro</h1>
+                <p>Clinic Management System</p>
+              </div>
+            </div>
+          </div>
+          <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <button
+              class="nav-item active"
+              data-page="dashboard"
+              onclick="showApp('dashboard')"
+            >
+              <span class="nav-icon">📊</span> Dashboard
+            </button>
+            <button
+              class="nav-item"
+              data-page="calendar"
+              onclick="showApp('calendar')"
+            >
+              <span class="nav-icon">📅</span> Appointments
+              <span class="nav-badge" id="pendingBadge" style="display: none"
+                >0</span
+              >
+            </button>
+            <button
+              class="nav-item"
+              data-page="patients"
+              onclick="showApp('patients')"
+            >
+              <span class="nav-icon">👥</span> Patients
+            </button>
+            <div class="nav-section-label">Account</div>
+            <button
+              class="nav-item"
+              data-page="profile"
+              onclick="showApp('profile')"
+            >
+              <span class="nav-icon">👤</span> My Profile
+            </button>
+          </nav>
+          <div class="sidebar-footer">
+            <div class="doctor-pill">
+              <div class="doctor-avatar" style="position: relative">
+                👨‍⚕️
+                <div class="online-dot"></div>
+              </div>
+              <div class="doctor-info">
+                <div class="name" id="sidebarDoctorName">Doctor</div>
+                <div class="specialty" id="sidebarDoctorSpecialty">
+                  Specialty
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+          <!-- TOPBAR -->
+          <header class="topbar">
+            <div>
+              <div class="topbar-title" id="topbarTitle">Dashboard</div>
+              <div class="topbar-subtitle" id="topbarSubtitle">
+                Welcome back, Doctor
+              </div>
+            </div>
+
+            <!-- Search hint (center) -->
+            <div
+              class="topbar-search"
+              onclick="
+                document.getElementById('patientSearch')?.focus();
+                showApp('patients');
+              "
+              data-tip="Search patients "
+            >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              Search patients...
+              <kbd>Ctrl K</kbd>
+            </div>
+
+            <div class="topbar-actions">
+              <!-- Live Clock -->
+              <div id="liveClock" data-tip="Current time">00:00:00</div>
+
+              <!-- Uiverse Toggle — scaled down, on the LEFT -->
+              <label
+                class="switch switch-sm"
+                title="Toggle Dark / Light mode"
+                data-tip="Toggle theme"
+              >
+                <input
+                  type="checkbox"
+                  id="themeCheckboxTop"
+                  onchange="toggleTheme()"
+                />
+                <span class="slider">
+                  <div class="moons-hole">
+                    <div class="moon-hole"></div>
+                    <div class="moon-hole"></div>
+                    <div class="moon-hole"></div>
+                  </div>
+                  <div class="black-clouds">
+                    <div class="black-cloud"></div>
+                    <div class="black-cloud"></div>
+                    <div class="black-cloud"></div>
+                  </div>
+                  <div class="clouds">
+                    <div class="cloud"></div>
+                    <div class="cloud"></div>
+                    <div class="cloud"></div>
+                    <div class="cloud"></div>
+                    <div class="cloud"></div>
+                    <div class="cloud"></div>
+                    <div class="cloud"></div>
+                  </div>
+                  <div class="stars">
+                    <svg class="star" viewBox="0 0 20 20">
+                      <path
+                        d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"
+                      ></path>
+                    </svg>
+                    <svg class="star" viewBox="0 0 20 20">
+                      <path
+                        d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"
+                      ></path>
+                    </svg>
+                    <svg class="star" viewBox="0 0 20 20">
+                      <path
+                        d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"
+                      ></path>
+                    </svg>
+                    <svg class="star" viewBox="0 0 20 20">
+                      <path
+                        d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"
+                      ></path>
+                    </svg>
+                    <svg class="star" viewBox="0 0 20 20">
+                      <path
+                        d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"
+                      ></path>
+                    </svg>
+                  </div>
+                </span>
+              </label>
+
+              <!-- Divider -->
+              <div class="topbar-divider"></div>
+
+              <button
+                class="btn btn-primary btn-glow"
+                onclick="openNewAppointment()"
+                data-tip="New Appointment (N)"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                New Appointment
+              </button>
+
+              <!-- Logout icon-only button -->
+              <button class="btn-logout" onclick="logout()" data-tip="Sign Out">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </button>
+            </div>
+          </header>
+
+          <!-- ===== DASHBOARD ===== -->
+          <div id="appDashboard" class="page-content">
+            <!-- Welcome Banner -->
+            <div class="welcome-banner" id="welcomeBanner">
+              <div style="position: relative; z-index: 1; flex: 1">
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    margin-bottom: 8px;
+                  "
+                >
+                  <div class="wb-avatar">👨‍⚕️</div>
+                  <div>
+                    <div class="wb-title" id="wbTitle">
+                      Good morning, Doctor!
+                    </div>
+                    <div class="wb-sub" id="wbSub">
+                      Here's your clinic overview
+                    </div>
+                  </div>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    gap: 8px;
+                    margin-top: 14px;
+                    flex-wrap: wrap;
+                  "
+                >
+                  <span
+                    class="status-pill status-online"
+                    style="background: rgba(16, 185, 129, 0.15); color: #34d399"
+                    ><span class="status-dot"></span> Available</span
+                  >
+                  <span
+                    class="status-pill"
+                    style="background: rgba(14, 165, 233, 0.12); color: #60c8f5"
+                    ><span id="wbDate"></span
+                  ></span>
+                </div>
+              </div>
+              <div class="wb-stats">
+                <div class="wb-stat">
+                  <span class="wb-stat-val" id="wbPatients">0</span
+                  ><span class="wb-stat-lbl">Patients</span>
+                </div>
+                <div
+                  style="
+                    width: 1px;
+                    background: rgba(255, 255, 255, 0.08);
+                    height: 40px;
+                  "
+                ></div>
+                <div class="wb-stat">
+                  <span class="wb-stat-val" id="wbToday">0</span
+                  ><span class="wb-stat-lbl">Today</span>
+                </div>
+                <div
+                  style="
+                    width: 1px;
+                    background: rgba(255, 255, 255, 0.08);
+                    height: 40px;
+                  "
+                ></div>
+                <div class="wb-stat">
+                  <span class="wb-stat-val" id="wbDone">0</span
+                  ><span class="wb-stat-lbl">Done</span>
+                </div>
+              </div>
+              <div class="wb-decor">🏥</div>
+            </div>
+
+            <!-- Stat Cards -->
+            <div class="stats-grid">
+              <div
+                class="stat-card blue tilt-card"
+                onclick="showApp('patients')"
+              >
+                <div class="stat-blob"></div>
+                <div
+                  style="
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                  "
+                >
+                  <div class="stat-icon blue">
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#0ea5e9"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                  </div>
+                  <span
+                    style="
+                      font-size: 10px;
+                      color: var(--success);
+                      background: var(--success-light);
+                      padding: 3px 8px;
+                      border-radius: 20px;
+                      font-weight: 700;
+                    "
+                    >↑ All</span
+                  >
+                </div>
+                <div class="stat-value" id="statTotalPatients">0</div>
+                <div class="stat-label">Total Patients</div>
+                <div class="mini-line"></div>
+              </div>
+              <div
+                class="stat-card green tilt-card"
+                onclick="showApp('calendar')"
+              >
+                <div class="stat-blob"></div>
+                <div
+                  style="
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                  "
+                >
+                  <div class="stat-icon green">
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#10b981"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <rect x="3" y="4" width="18" height="18" rx="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                  </div>
+                  <span
+                    style="
+                      font-size: 10px;
+                      color: var(--primary);
+                      background: var(--primary-light);
+                      padding: 3px 8px;
+                      border-radius: 20px;
+                      font-weight: 700;
+                    "
+                    >Today</span
+                  >
+                </div>
+                <div class="stat-value" id="statTodayAppts">0</div>
+                <div class="stat-label">Appointments</div>
+                <div class="mini-line"></div>
+              </div>
+              <div class="stat-card yellow tilt-card">
+                <div class="stat-blob"></div>
+                <div
+                  style="
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                  "
+                >
+                  <div class="stat-icon yellow">
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#f59e0b"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                  </div>
+                  <span
+                    style="
+                      font-size: 10px;
+                      color: var(--warning);
+                      background: var(--warning-light);
+                      padding: 3px 8px;
+                      border-radius: 20px;
+                      font-weight: 700;
+                    "
+                    >Action</span
+                  >
+                </div>
+                <div class="stat-value" id="statPending">0</div>
+                <div class="stat-label">Pending</div>
+                <div class="mini-line"></div>
+              </div>
+              <div class="stat-card purple tilt-card">
+                <div class="stat-blob"></div>
+                <div
+                  style="
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                  "
+                >
+                  <div class="stat-icon purple">
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#8b5cf6"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                  <span
+                    style="
+                      font-size: 10px;
+                      color: var(--purple);
+                      background: var(--purple-light);
+                      padding: 3px 8px;
+                      border-radius: 20px;
+                      font-weight: 700;
+                    "
+                    >Total</span
+                  >
+                </div>
+                <div class="stat-value" id="statDone">0</div>
+                <div class="stat-label">Completed</div>
+                <div class="mini-line"></div>
+              </div>
+            </div>
+
+            <!-- Charts row -->
+            <div
+              style="
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                margin-bottom: 20px;
+              "
+            >
+              <div class="chart-card">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 4px;
+                  "
+                >
+                  <div class="chart-card-title">Appointments Trend</div>
+                  <span
+                    style="
+                      font-size: 11px;
+                      color: var(--text-muted);
+                      background: var(--bg);
+                      padding: 3px 10px;
+                      border-radius: 20px;
+                      border: 1px solid var(--border);
+                    "
+                    >Last 7 Days</span
+                  >
+                </div>
+                <div class="chart-card-sub">Daily appointment activity</div>
+                <div class="chart-wrap"><canvas id="chartAppts"></canvas></div>
+              </div>
+              <div class="chart-card">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 4px;
+                  "
+                >
+                  <div class="chart-card-title">Patient Health Map</div>
+                  <span
+                    style="
+                      font-size: 11px;
+                      color: var(--text-muted);
+                      background: var(--bg);
+                      padding: 3px 10px;
+                      border-radius: 20px;
+                      border: 1px solid var(--border);
+                    "
+                    >All patients</span
+                  >
+                </div>
+                <div class="chart-card-sub">Condition distribution</div>
+                <div class="chart-wrap">
+                  <canvas id="chartConditions"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Today schedule -->
+            <div class="section-header">
+              <div>
+                <div class="section-title-lg">Today's Schedule</div>
+                <div class="section-sub" id="todayDateLabel"></div>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center">
+                <span class="kbd-hint">N</span>
+                <button class="btn btn-secondary" onclick="showApp('calendar')">
+                  View All
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    style="vertical-align: middle"
+                  >
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div id="dashTodayList"></div>
+          </div>
+
+          <!-- CALENDAR -->
+          <div id="appCalendar" class="page-content hidden">
+            <!-- Mini stats strip -->
+            <div class="cal-stats-strip">
+              <div class="cal-stat-chip">
+                <div
+                  class="cal-stat-dot"
+                  style="background: var(--warning)"
+                ></div>
+                <span id="calStatPending">0</span> Pending
+              </div>
+              <div class="cal-stat-chip">
+                <div
+                  class="cal-stat-dot"
+                  style="background: var(--danger)"
+                ></div>
+                <span id="calStatConfirmed">0</span> Cancelled
+              </div>
+              <div class="cal-stat-chip">
+                <div
+                  class="cal-stat-dot"
+                  style="background: var(--purple)"
+                ></div>
+                <span id="calStatDone">0</span> Completed
+              </div>
+              <div style="margin-left: auto">
+                <button
+                  class="btn btn-primary btn-glow"
+                  onclick="openNewAppointment()"
+                >
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  New Appointment
+                </button>
+              </div>
+            </div>
+
+            <div class="cal-layout">
+              <div class="cal-left">
+                <div class="cal-card">
+                  <!-- Calendar header -->
+                  <div class="calendar-header">
+                    <button class="cal-nav-btn" onclick="changeMonth(-1)">
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      >
+                        <polyline points="15 18 9 12 15 6" />
+                      </svg>
+                    </button>
+                    <div class="cal-title-wrap">
+                      <div class="calendar-title" id="calTitle"></div>
+                      <button class="cal-today-btn" onclick="goToday()">
+                        Today
+                      </button>
+                    </div>
+                    <button class="cal-nav-btn" onclick="changeMonth(1)">
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      >
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
+                  </div>
+                  <!-- Grid -->
+                  <div
+                    id="calGrid"
+                    style="
+                      display: grid;
+                      grid-template-columns: repeat(7, 1fr);
+                      gap: 3px;
+                    "
+                  ></div>
+                  <!-- Legend -->
+                  <div class="cal-legend">
+                    <span class="cal-legend-item"
+                      ><span
+                        class="cal-legend-dot"
+                        style="background: var(--primary)"
+                      ></span
+                      >1 appt</span
+                    >
+                    <span class="cal-legend-item"
+                      ><span
+                        class="cal-legend-dot"
+                        style="background: var(--purple)"
+                      ></span
+                      >completed</span
+                    >
+                    <span class="cal-legend-item"
+                      ><span
+                        class="cal-legend-dot"
+                        style="background: var(--warning)"
+                      ></span
+                      >pending</span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right panel -->
+              <div class="cal-right">
+                <div
+                  class="section-header"
+                  style="margin-bottom: 14px; padding-bottom: 12px"
+                >
+                  <div>
+                    <div class="section-title-lg" id="calSelectedLabel">
+                      All Appointments
+                    </div>
+                    <div
+                      class="cal-appt-count section-sub"
+                      id="calApptCount"
+                    ></div>
+                  </div>
+                </div>
+                <div id="calApptList"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PATIENTS -->
+          <div id="appPatients" class="page-content hidden">
+            <div class="page-header-row">
+              <div>
+                <div class="section-title-lg">Patient Registry</div>
+                <div class="section-sub" id="patientCountLabel">Loading...</div>
+              </div>
+              <button
+                class="btn btn-success btn-glow"
+                onclick="openAddPatient()"
+              >
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                New Patient
+              </button>
+            </div>
+            <div class="search-card">
+              <div class="search-icon-wrap" style="flex: 1">
+                <input
+                  type="text"
+                  class="search-input"
+                  id="patientSearch"
+                  placeholder="Search name, phone, or ID..."
+                  oninput="debouncedRenderPatients()"
+                />
+              </div>
+              <button
+                class="btn btn-secondary"
+                onclick="
+                  document.getElementById('patientSearch').value = '';
+                  renderPatientsTable();
+                "
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div class="table-card">
+              <div class="data-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="width: 36px">#</th>
+                      <th>Patient</th>
+                      <th>Age / Sex</th>
+                      <th>Phone</th>
+                      <th>Blood</th>
+                      <th>Last Visit</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="patientsBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- PROFILE -->
+          <div id="appProfile" class="page-content hidden">
+            <div class="profile-hero-v2">
+              <div class="prof-hero-bg"></div>
+              <div class="prof-hero-content">
+                <div class="prof-avatar-wrap">
+                  <div
+                    class="profile-avatar-big"
+                    id="profileAvatarBig"
+                    style="width: 88px; height: 88px; font-size: 40px"
+                  >
+                    👨‍⚕️
+                  </div>
+                  <div
+                    class="online-dot"
+                    style="
+                      bottom: 4px;
+                      right: 4px;
+                      width: 14px;
+                      height: 14px;
+                      border-width: 3px;
+                    "
+                  ></div>
+                </div>
+                <div class="prof-info">
+                  <div
+                    class="profile-name"
+                    id="profName"
+                    style="font-size: 28px"
+                  >
+                    Doctor
+                  </div>
+                  <div
+                    class="profile-specialty"
+                    id="profSpecialty"
+                    style="font-size: 15px; margin-top: 5px"
+                  ></div>
+                  <div class="profile-stats" style="margin-top: 20px">
+                    <div class="profile-stat-item">
+                      <div class="profile-stat-value" id="profStatPatients">
+                        0
+                      </div>
+                      <div class="profile-stat-label">Patients</div>
+                    </div>
+                    <div class="prof-divider"></div>
+                    <div class="profile-stat-item">
+                      <div class="profile-stat-value" id="profStatAppts">0</div>
+                      <div class="profile-stat-label">Appointments</div>
+                    </div>
+                    <div class="prof-divider"></div>
+                    <div class="profile-stat-item">
+                      <div class="profile-stat-value" id="profStatClinics">
+                        0
+                      </div>
+                      <div class="profile-stat-label">Clinics</div>
+                    </div>
+                    <div class="prof-divider"></div>
+                    <div class="profile-stat-item">
+                      <div
+                        class="profile-stat-value"
+                        style="display: flex; align-items: center; gap: 6px"
+                      >
+                        <span id="profRating">4.6</span>
+                        <span style="font-size: 18px; color: #fbbf24">★</span>
+                      </div>
+                      <div class="profile-stat-label">Rating</div>
+                    </div>
+                  </div>
+                </div>
+                <div style="margin-left: auto; align-self: flex-start">
+                  <button class="btn btn-primary" onclick="openEditProfile()">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <path
+                        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                      />
+                      <path
+                        d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                      />
+                    </svg>
+                    Edit Profile
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="info-grid">
+              <div class="info-card tilt-card">
+                <div class="info-card-title">
+                  <div
+                    class="info-card-icon"
+                    style="
+                      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+                    "
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  Contact Info
+                </div>
+                <div class="info-item">
+                  <div class="info-icon">📞</div>
+                  <div>
+                    <div class="info-label">Phone</div>
+                    <div class="info-value" id="profPhone">—</div>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div class="info-icon">📧</div>
+                  <div>
+                    <div class="info-label">Email</div>
+                    <div class="info-value" id="profEmail">—</div>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div class="info-icon">📍</div>
+                  <div>
+                    <div class="info-label">Governorate</div>
+                    <div class="info-value" id="profCity">—</div>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div></div>
+                </div>
+              </div>
+              <div class="info-card tilt-card">
+                <div class="info-card-title">
+                  <div
+                    class="info-card-icon"
+                    style="
+                      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+                    "
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                      <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                    </svg>
+                  </div>
+                  Credentials
+                </div>
+                <div class="info-item">
+                  <div class="info-icon">🏆</div>
+                  <div>
+                    <div class="info-label">Specialty</div>
+                    <div class="info-value" id="profSpec2">—</div>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div class="info-icon">📜</div>
+                  <div>
+                    <div class="info-label">Certificate</div>
+                    <div class="info-value" id="profCert">—</div>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div class="info-icon">🔖</div>
+                  <div>
+                    <div class="info-label">License</div>
+                    <div class="info-value" id="profLicense">—</div>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div></div>
+                </div>
+              </div>
+              <div class="info-card tilt-card">
+                <div class="info-card-title">
+                  <div
+                    class="info-card-icon"
+                    style="
+                      background: linear-gradient(135deg, #10b981, #059669);
+                    "
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <line x1="18" y1="20" x2="18" y2="10" />
+                      <line x1="12" y1="20" x2="12" y2="4" />
+                      <line x1="6" y1="20" x2="6" y2="14" />
+                    </svg>
+                  </div>
+                  This Month
+                </div>
+                <div class="info-item">
+                  <div class="info-icon">📅</div>
+                  <div>
+                    <div class="info-label">Appointments</div>
+                    <div class="info-value" id="profMonthAppts">0</div>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div class="info-icon">👥</div>
+                  <div>
+                    <div class="info-label">New Patients</div>
+                    <div class="info-value" id="profMonthPatients">0</div>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div class="info-icon">✅</div>
+                  <div>
+                    <div class="info-label">Completed</div>
+                    <div class="info-value" id="profMonthDone">0</div>
+                  </div>
+                </div>
+                <div class="info-item"></div>
+              </div>
+            </div>
+            <div class="section-header">
+              <div>
+                <div class="section-title-lg">My Clinics</div>
+                <div class="section-sub">Practice locations</div>
+              </div>
+              <button class="btn btn-success" onclick="openAddClinic()">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add Clinic
+              </button>
+            </div>
+            <div class="clinics-grid" id="clinicsGrid"></div>
+          </div>
+
+          <!-- CONSULTATION -->
+          <div id="appConsultation" class="page-content hidden">
+            <!-- Consultation Header -->
+            <div class="cs-page-header">
+              <button class="btn-back" onclick="showApp('calendar')">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                >
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+                Back
+              </button>
+              <div class="cs-header-title">
+                <div
+                  style="
+                    font-family: &quot;Fraunces&quot;, serif;
+                    font-size: 20px;
+                    font-weight: 700;
+                    color: var(--text);
+                  "
+                >
+                  New Consultation
+                </div>
+                <div
+                  style="
+                    font-size: 12px;
+                    color: var(--text-muted);
+                    margin-top: 2px;
+                  "
+                  id="csApptInfo"
+                >
+                  —
+                </div>
+              </div>
+              <div class="cs-step-indicator">
+                <div class="cs-step active" data-step="1">
+                  <span>1</span> Patient
+                </div>
+                <div class="cs-step-line"></div>
+                <div class="cs-step" data-step="2">
+                  <span>2</span> Diagnosis
+                </div>
+                <div class="cs-step-line"></div>
+                <div class="cs-step" data-step="3">
+                  <span>3</span> Treatment
+                </div>
+              </div>
+            </div>
+
+            <!-- 3-column layout -->
+            <div class="cs-layout">
+              <!-- LEFT: Patient Panel -->
+              <div class="cs-left">
+                <!-- Patient Card -->
+                <div class="cs-patient-card">
+                  <div class="cs-patient-avatar" id="csPatientAvatar">—</div>
+                  <div class="cs-patient-info">
+                    <div class="cs-patient-name" id="csPatientName">—</div>
+                    <div id="csPatientMeta" class="cs-patient-meta"></div>
+                  </div>
+                </div>
+
+                <!-- Vitals Strip -->
+                <div class="cs-vitals" id="csVitals"></div>
+
+                <!-- Medical History -->
+                <div class="cs-panel">
+                  <div class="cs-panel-header">
+                    <div
+                      class="cs-panel-icon"
+                      style="
+                        background: linear-gradient(135deg, #ef4444, #dc2626);
+                      "
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      >
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                      </svg>
+                    </div>
+                    Medical History
+                  </div>
+                  <div id="csHistory"></div>
+                </div>
+
+                <!-- Previous Visits -->
+                <div class="cs-panel">
+                  <div class="cs-panel-header">
+                    <div
+                      class="cs-panel-icon"
+                      style="
+                        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+                      "
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                    </div>
+                    Previous Visits
+                  </div>
+                  <div id="csVisits"></div>
+                </div>
+              </div>
+
+              <!-- RIGHT: Consultation Form -->
+              <div class="cs-right">
+                <form id="consultationForm" onsubmit="saveConsultation(event)">
+                  <input type="hidden" id="csApptId" />
+
+                  <!-- Diagnosis Block -->
+                  <div class="cs-form-block">
+                    <div class="cs-block-header">
+                      <div class="cs-block-num">01</div>
+                      <div>
+                        <div class="cs-block-title">Diagnosis</div>
+                        <div class="cs-block-sub">
+                          Search and add ICD-10 codes
+                        </div>
+                      </div>
+                    </div>
+                    <div class="autocomplete-wrapper">
+                      <div class="cs-search-wrap">
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          style="color: var(--text-muted); flex-shrink: 0"
+                        >
+                          <circle cx="11" cy="11" r="8" />
+                          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <input
+                          type="text"
+                          class="cs-input"
+                          id="diagSearch"
+                          name="diagnosisSearch"
+                          placeholder="Search disease..."
+                          oninput="debouncedSearchDiagnosis(this.value)"
+                          autocomplete="off"
+                        />
+                      </div>
+                      <div class="autocomplete-dropdown" id="diagDrop"></div>
+                    </div>
+                    <div id="selectedDiagnoses" class="cs-tags-wrap"></div>
+                  </div>
+
+                  <!-- Medications Block -->
+                  <div class="cs-form-block">
+                    <div class="cs-block-header">
+                      <div
+                        class="cs-block-num"
+                        style="
+                          background: linear-gradient(135deg, #10b981, #059669);
+                        "
+                      >
+                        02
+                      </div>
+                      <div>
+                        <div class="cs-block-title">Medications</div>
+                        <div class="cs-block-sub">
+                          Prescribe drugs with dosage
+                        </div>
+                      </div>
+                    </div>
+                    <div class="autocomplete-wrapper">
+                      <div class="cs-search-wrap">
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          style="color: var(--text-muted); flex-shrink: 0"
+                        >
+                          <rect x="9" y="2" width="6" height="6" rx="1" />
+                          <path d="M11 8v8m-4-4h8" />
+                          <rect x="3" y="14" width="18" height="8" rx="2" />
+                        </svg>
+                        <input
+                          type="text"
+                          class="cs-input"
+                          id="drugSearch"
+                          name="medicationSearch"
+                          placeholder="Search medication..."
+                          oninput="debouncedSearchMedication(this.value)"
+                          autocomplete="off"
+                        />
+                      </div>
+                      <div class="autocomplete-dropdown" id="drugDrop"></div>
+                    </div>
+                    <div class="cs-med-builder">
+                      <div class="cs-med-select-wrap">
+                        <label class="cs-med-lbl">Dose</label>
+                        <input
+                          type="text"
+                          class="cs-med-sel"
+                          id="medDose"
+                          name="dose"
+                          placeholder="500mg"
+                        />
+                      </div>
+                      <div class="cs-med-select-wrap">
+                        <label class="cs-med-lbl">Frequency</label>
+                        <select
+                          class="cs-med-sel"
+                          id="medFrequency"
+                          name="frequency"
+                        >
+                          <option value="">-- Select --</option>
+                          <option value="Once Daily">Once Daily</option>
+                          <option value="Twice Daily">Twice Daily</option>
+                          <option value="3x Daily">3x Daily</option>
+                          <option value="4x Daily">4x Daily</option>
+                          <option value="As Needed">As Needed</option>
+                        </select>
+                      </div>
+                      <div class="cs-med-select-wrap">
+                        <label class="cs-med-lbl">Timing</label>
+                        <select class="cs-med-sel" id="medTiming" name="timing">
+                          <option value="">-- Select --</option>
+                          <option value="Anytime">Anytime</option>
+                          <option value="Before Food">Before Food</option>
+                          <option value="After Food">After Food</option>
+                        </select>
+                      </div>
+                      <div class="cs-med-select-wrap">
+                        <label class="cs-med-lbl">Days</label>
+                        <input
+                          type="number"
+                          class="cs-med-sel"
+                          id="medDays"
+                          name="days"
+                          min="1"
+                          placeholder="7"
+                        />
+                      </div>
+                      <div class="cs-med-select-wrap">
+                        <label class="cs-med-lbl">Form</label>
+                        <select class="cs-med-sel" id="medForm" name="form">
+                          <option value="">-- Select --</option>
+                          <option value="Tablet">Tablet</option>
+                          <option value="Capsule">Capsule</option>
+                          <option value="Syrup">Syrup</option>
+                          <option value="Injection">Injection</option>
+                          <option value="Cream">Cream</option>
+                          <option value="Ointment">Ointment</option>
+                        </select>
+                      </div>
+                      <button
+                        type="button"
+                        class="btn btn-success"
+                        onclick="addMedication()"
+                        style="
+                          padding: 8px 12px;
+                          font-size: 12px;
+                          align-self: end;
+                        "
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div id="selectedMeds" class="cs-meds-wrap"></div>
+                  </div>
+
+                  <!-- Notes + Condition in a grid -->
+                  <div
+                    style="
+                      display: grid;
+                      grid-template-columns: 1fr 1fr;
+                      gap: 14px;
+                    "
+                  >
+                    <div class="cs-form-block">
+                      <div class="cs-block-header">
+                        <div
+                          class="cs-block-num"
+                          style="
+                            background: linear-gradient(
+                              135deg,
+                              #8b5cf6,
+                              #7c3aed
+                            );
+                          "
+                        >
+                          04
+                        </div>
+                        <div>
+                          <div class="cs-block-title">Clinical Notes</div>
+                          <div class="cs-block-sub">Observations</div>
+                        </div>
+                      </div>
+                      <textarea
+                        class="cs-textarea"
+                        id="csNotes"
+                        name="notes"
+                        placeholder="Write your clinical notes here..."
+                      ></textarea>
+                    </div>
+                    <div class="cs-form-block">
+                      <div class="cs-block-header">
+                        <div
+                          class="cs-block-num"
+                          style="
+                            background: linear-gradient(
+                              135deg,
+                              #06b6d4,
+                              #0891b2
+                            );
+                          "
+                        >
+                          05
+                        </div>
+                        <div>
+                          <div class="cs-block-title">Disease Description</div>
+                          <div class="cs-block-sub">
+                            Clinical disease summary
+                          </div>
+                        </div>
+                      </div>
+                      <textarea
+                        class="cs-textarea"
+                        id="csDiseaseDescription"
+                        name="diseaseDescription"
+                        placeholder="Describe the disease presentation and assessment..."
+                      ></textarea>
+                      <!-- Condition picker kept hidden for legacy stored records only -->
+                      <div
+                        class="cs-condition-grid"
+                        id="csConditionPicker"
+                        style="display: none"
+                      >
+                        <button
+                          type="button"
+                          class="cs-cond-btn active"
+                          data-val="stable"
+                          onclick="setCondition(this, 'stable')"
+                        >
+                          <span class="cs-cond-icon">✅</span>
+                          <span class="cs-cond-label">Stable</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="cs-cond-btn"
+                          data-val="improving"
+                          onclick="setCondition(this, 'improving')"
+                        >
+                          <span class="cs-cond-icon">📈</span>
+                          <span class="cs-cond-label">Improving</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="cs-cond-btn cs-cond-danger"
+                          data-val="critical"
+                          onclick="setCondition(this, 'critical')"
+                        >
+                          <span class="cs-cond-icon">🔴</span>
+                          <span class="cs-cond-label">Critical</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="cs-cond-btn cs-cond-warn"
+                          data-val="followup"
+                          onclick="setCondition(this, 'followup')"
+                        >
+                          <span class="cs-cond-icon">🔄</span>
+                          <span class="cs-cond-label">Follow-up</span>
+                        </button>
+                      </div>
+                      <input
+                        type="hidden"
+                        id="csCondition"
+                        name="condition"
+                        value="stable"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="cs-form-block" style="display: none">
+                    <div class="cs-block-header">
+                      <div
+                        class="cs-block-num"
+                        style="
+                          background: linear-gradient(135deg, #10b981, #059669);
+                        "
+                      >
+                        Rx
+                      </div>
+                      <div>
+                        <div class="cs-block-title">Prescription</div>
+                        <div class="cs-block-sub">
+                          Instructions for the patient
+                        </div>
+                      </div>
+                    </div>
+                    <textarea
+                      class="cs-textarea"
+                      id="csPrescription"
+                      name="prescription"
+                      placeholder="Write prescription instructions..."
+                    ></textarea>
+                  </div>
+
+                  <!-- Submit bar -->
+                  <div class="cs-submit-bar">
+                    <div class="cs-submit-info">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        style="color: var(--text-muted)"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                      </svg>
+                      <span
+                        >This will mark the appointment as
+                        <strong>completed</strong></span
+                      >
+                    </div>
+                    <div style="display: flex; gap: 10px">
+                      <button
+                        type="button"
+                        class="btn btn-secondary"
+                        onclick="showApp('calendar')"
+                      >
+                        Discard
+                      </button>
+                      <button
+                        type="submit"
+                        class="btn btn-success btn-glow cs-submit-btn"
+                      >
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.5"
+                          stroke-linecap="round"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Save Consultation
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- PATIENT DETAILS -->
+          <div id="appPatientDetails" class="page-content hidden">
+            <button class="btn-back" onclick="showApp('patients')">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              Back to Patients
+            </button>
+            <div id="patientDetailsContent"></div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- ============ MODALS ============ -->
+
+    <!-- New/Edit Appointment -->
+    <div class="modal-overlay hidden" id="apptModal">
+      <div class="modal modal-appt">
+        <!-- Colored top strip -->
+        <div class="modal-top-strip"></div>
+        <div class="modal-header" style="padding-top: 20px">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <div class="modal-icon-badge">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+            </div>
+            <div>
+              <div class="modal-title" id="apptModalTitle">New Appointment</div>
+              <div
+                style="
+                  font-size: 12px;
+                  color: var(--text-muted);
+                  margin-top: 1px;
+                "
+              >
+                Fill in the details below
+              </div>
+            </div>
+          </div>
+          <button class="modal-close" onclick="closeModal('apptModal')">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <form id="apptForm" onsubmit="saveAppointment(event)">
+            <input type="hidden" id="apptId" />
+
+            <!-- Patient select — enhanced -->
+            <div class="form-group">
+              <label class="form-label">Patient</label>
+              <div class="modal-select-wrap">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  class="modal-select-icon"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <select
+                  class="form-select modal-select"
+                  id="apptPatient"
+                  name="patientId"
+                  required
+                >
+                  <option value="">-- Choose patient --</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Clinic select -->
+            <div class="form-group">
+              <label class="form-label">Clinic</label>
+              <div class="modal-select-wrap">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  class="modal-select-icon"
+                >
+                  <path d="M3 21h18" />
+                  <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
+                  <path d="M9 21v-6h6v6" />
+                  <path d="M9 7h.01" />
+                  <path d="M15 7h.01" />
+                  <path d="M9 11h.01" />
+                  <path d="M15 11h.01" />
+                </svg>
+                <select
+                  class="form-select modal-select"
+                  id="apptClinic"
+                  name="clinicId"
+                  onchange="syncClinicAppointmentDefaults()"
+                  required
+                >
+                  <option value="">-- Choose clinic --</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Date + Time row -->
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Date</label>
+                <div class="modal-input-wrap">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    class="modal-input-icon"
+                  >
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                  <input
+                    type="date"
+                    class="form-input modal-input"
+                    id="apptDate"
+                    name="date"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Time</label>
+                <div class="modal-input-wrap">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    class="modal-input-icon"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  <input
+                    type="time"
+                    class="form-input modal-input"
+                    id="apptTime"
+                    name="time"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Duration + Price row -->
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Duration (minutes)</label>
+                <input
+                  type="number"
+                  class="form-input"
+                  id="apptDuration"
+                  name="durationMinutes"
+                  min="5"
+                  step="5"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Price</label>
+                <input
+                  type="number"
+                  class="form-input"
+                  id="apptPrice"
+                  name="price"
+                  min="0"
+                  step="1"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- Status — pill buttons instead of dropdown -->
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <div class="appt-status-picker" id="apptStatusPicker">
+                <button
+                  type="button"
+                  class="appt-status-btn active"
+                  data-val="Pending"
+                  onclick="setApptStatus(this, 'Pending')"
+                >
+                  <span
+                    class="appt-status-dot"
+                    style="background: #f59e0b"
+                  ></span>
+                  Pending
+                </button>
+                <button
+                  type="button"
+                  class="appt-status-btn"
+                  data-val="Completed"
+                  onclick="setApptStatus(this, 'Completed')"
+                >
+                  <span
+                    class="appt-status-dot"
+                    style="background: #8b5cf6"
+                  ></span>
+                  Completed
+                </button>
+                <button
+                  type="button"
+                  class="appt-status-btn"
+                  data-val="Cancelled"
+                  onclick="setApptStatus(this, 'Cancelled')"
+                >
+                  <span
+                    class="appt-status-dot"
+                    style="background: #ef4444"
+                  ></span>
+                  Cancelled
+                </button>
+              </div>
+              <input
+                type="hidden"
+                id="apptStatus"
+                name="status"
+                value="Pending"
+              />
+            </div>
+
+            <!-- Notes -->
+            <div class="form-group">
+              <label class="form-label"
+                >Notes
+                <span
+                  style="
+                    opacity: 0.5;
+                    font-weight: 400;
+                    text-transform: none;
+                    letter-spacing: 0;
+                  "
+                  >(optional)</span
+                ></label
+              >
+              <textarea
+                class="form-textarea"
+                id="apptNotes"
+                name="notes"
+                placeholder="Any important notes for this appointment..."
+              ></textarea>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="closeModal('apptModal')"
+              >
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary btn-glow">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Save Appointment
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add/Edit Patient -->
+    <div class="modal-overlay hidden" id="patientModal">
+      <div class="modal wide">
+        <div class="modal-header">
+          <div class="modal-title" id="patientModalTitle">New Patient</div>
+          <button class="modal-close" onclick="closeModal('patientModal')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="patientForm" onsubmit="savePatient(event)">
+            <input type="hidden" id="patientId" />
+            <div
+              class="form-group"
+              style="
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 0;
+              "
+            >
+              Personal Information
+            </div>
+            <div class="form-grid" style="margin-top: 12px">
+              <div class="form-group">
+                <label class="form-label">Full Name *</label>
+                <input
+                  type="text"
+                  class="form-input"
+                  id="pName"
+                  name="name"
+                  placeholder="John Doe"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Age *</label>
+                <input
+                  type="number"
+                  class="form-input"
+                  id="pAge"
+                  name="age"
+                  placeholder="30"
+                  min="1"
+                  max="150"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Gender *</label>
+                <select class="form-select" id="pGender" name="gender" required>
+                  <option value="">-- Select --</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone *</label>
+                <input
+                  type="tel"
+                  class="form-input"
+                  id="pPhone"
+                  name="phone"
+                  placeholder="+20 100 000 0000"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Governorate</label>
+                <select class="form-select" id="pCity" name="city">
+                  <option value="">-- Select --</option>
+                  <option>Cairo</option>
+                  <option>Alexandria</option>
+                  <option>Giza</option>
+                  <option>Gharbia</option>
+                  <option>Dakahlia</option>
+                  <option>Monufia</option>
+                  <option>Qalyubia</option>
+                  <option>Sharqia</option>
+                  <option>Beheira</option>
+                  <option>Kafr El Sheikh</option>
+                  <option>Ismailia</option>
+                  <option>Port Said</option>
+                  <option>Suez</option>
+                  <option>Damietta</option>
+                  <option>Faiyum</option>
+                  <option>Beni Suef</option>
+                  <option>Minya</option>
+                  <option>Asyut</option>
+                  <option>Sohag</option>
+                  <option>Qena</option>
+                  <option>Luxor</option>
+                  <option>Aswan</option>
+                  <option>Red Sea</option>
+                  <option>Matrouh</option>
+                  <option>North Sinai</option>
+                  <option>South Sinai</option>
+                  <option>New Valley</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Marital Status</label>
+                <select class="form-select" id="pMarried" name="married">
+                  <option value="">-- Select --</option>
+                  <option value="single">Single</option>
+                  <option value="married">Married</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Blood Type</label>
+                <select class="form-select" id="pBlood" name="bloodType">
+                  <option value="">-- Select --</option>
+                  <option>O+</option>
+                  <option>O-</option>
+                  <option>A+</option>
+                  <option>A-</option>
+                  <option>B+</option>
+                  <option>B-</option>
+                  <option>AB+</option>
+                  <option>AB-</option>
+                </select>
+              </div>
+            </div>
+            <div
+              class="form-group"
+              style="
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-top: 16px;
+                margin-bottom: 0;
+              "
+            >
+              Physical Measurements
+            </div>
+            <div class="form-grid" style="margin-top: 12px">
+              <div class="form-group">
+                <label class="form-label">Height (cm)</label>
+                <input
+                  type="number"
+                  class="form-input"
+                  id="pHeight"
+                  name="height"
+                  placeholder="170"
+                  min="50"
+                  max="250"
+                  step="0.1"
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Weight (kg)</label>
+                <input
+                  type="number"
+                  class="form-input"
+                  id="pWeight"
+                  name="weight"
+                  placeholder="70"
+                  min="10"
+                  max="500"
+                  step="0.1"
+                />
+              </div>
+            </div>
+            <div
+              class="form-group"
+              style="
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-top: 16px;
+                margin-bottom: 12px;
+              "
+            >
+              Medical History
+            </div>
+            <div
+              style="
+                display: flex;
+                gap: 20px;
+                flex-wrap: wrap;
+                margin-bottom: 16px;
+              "
+            >
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  cursor: pointer;
+                  font-size: 14px;
+                "
+                ><input
+                  type="checkbox"
+                  id="pHypertension"
+                  name="hypertension"
+                />
+                Hypertension</label
+              >
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  cursor: pointer;
+                  font-size: 14px;
+                "
+                ><input type="checkbox" id="pDiabetes" name="diabetes" />
+                Diabetes</label
+              >
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  cursor: pointer;
+                  font-size: 14px;
+                "
+                ><input type="checkbox" id="pAnaemia" name="anaemia" />
+                Anaemia</label
+              >
+            </div>
+            <div class="form-group">
+              <label class="form-label">Chronic</label>
+              <input
+                type="text"
+                class="form-input"
+                id="pChronic"
+                name="chronic"
+                placeholder="e.g., asthma, kidney disease, long-term allergies..."
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notes</label>
+              <textarea
+                class="form-textarea"
+                id="pNotes"
+                name="notes"
+                placeholder="Patient-specific notes..."
+              ></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="closeModal('patientModal')"
+              >
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-success">
+                Save Patient
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Clinic -->
+    <div class="modal-overlay hidden" id="clinicModal">
+      <div class="modal wide">
+        <div class="modal-header">
+          <div class="modal-title" id="clinicModalTitle">🏥 Add New Clinic</div>
+          <button class="modal-close" onclick="closeModal('clinicModal')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="clinicForm" onsubmit="saveClinic(event)">
+            <input type="hidden" id="clinicId" />
+
+            <!-- SECTION 1: Basic Information -->
+            <div class="modal-form-section">
+              <div class="modal-form-section-header">📋 Basic Information</div>
+
+              <!-- Clinic Name -->
+              <div class="form-group">
+                <label class="form-label">Clinic Name *</label>
+                <input
+                  type="text"
+                  class="form-input"
+                  id="cName"
+                  name="clinicName"
+                  placeholder="e.g., Heart & Vascular Center"
+                  required
+                />
+              </div>
+
+              <!-- Clinic Email & Phone -->
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Email *</label>
+                  <input
+                    type="email"
+                    class="form-input"
+                    id="cEmail"
+                    name="clinicEmail"
+                    placeholder="clinic@example.com"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Phone *</label>
+                  <input
+                    type="tel"
+                    class="form-input"
+                    id="cPhone"
+                    name="clinicPhone"
+                    placeholder="+20 2 1234 5678"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Address -->
+              <div class="form-group">
+                <label class="form-label">Address *</label>
+                <input
+                  type="text"
+                  class="form-input"
+                  id="cLocation"
+                  name="location"
+                  placeholder="e.g., 123 Medical St, Cairo"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- SECTION 2: Working Hours & Days -->
+            <div class="modal-form-section">
+              <div class="modal-form-section-header">⏰ Working Schedule</div>
+
+              <!-- Working Days as Modern Pills -->
+              <div class="form-group">
+                <label class="form-label">Working Days *</label>
+                <div class="working-day-container">
+                  <label class="working-day-label">
+                    <input
+                      type="checkbox"
+                      class="working-day-checkbox"
+                      value="Saturday"
+                    />
+                    Saturday
+                  </label>
+                  <label class="working-day-label">
+                    <input
+                      type="checkbox"
+                      class="working-day-checkbox"
+                      value="Sunday"
+                    />
+                    Sunday
+                  </label>
+                  <label class="working-day-label">
+                    <input
+                      type="checkbox"
+                      class="working-day-checkbox"
+                      value="Monday"
+                    />
+                    Monday
+                  </label>
+                  <label class="working-day-label">
+                    <input
+                      type="checkbox"
+                      class="working-day-checkbox"
+                      value="Tuesday"
+                    />
+                    Tuesday
+                  </label>
+                  <label class="working-day-label">
+                    <input
+                      type="checkbox"
+                      class="working-day-checkbox"
+                      value="Wednesday"
+                    />
+                    Wednesday
+                  </label>
+                  <label class="working-day-label">
+                    <input
+                      type="checkbox"
+                      class="working-day-checkbox"
+                      value="Thursday"
+                    />
+                    Thursday
+                  </label>
+                  <label class="working-day-label">
+                    <input
+                      type="checkbox"
+                      class="working-day-checkbox"
+                      value="Friday"
+                    />
+                    Friday
+                  </label>
+                </div>
+              </div>
+
+              <!-- Working Hours (Start & End Time) -->
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Work Start Time *</label>
+                  <input
+                    type="time"
+                    class="form-input"
+                    id="cWorkStartTime"
+                    name="workStartTime"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Work End Time *</label>
+                  <input
+                    type="time"
+                    class="form-input"
+                    id="cWorkEndTime"
+                    name="workEndTime"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION 3: Pricing & Appointment Slots -->
+            <div class="modal-form-section">
+              <div class="modal-form-section-header">💰 Pricing & Slots</div>
+
+              <!-- Doctor Price & Slot Duration -->
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Doctor Price (EGP) *</label>
+                  <input
+                    type="number"
+                    class="form-input"
+                    id="cDoctorPrice"
+                    name="doctorPrice"
+                    placeholder="500"
+                    min="0"
+                    step="1"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Slot Duration (minutes) *</label>
+                  <input
+                    type="number"
+                    class="form-input"
+                    id="cSlotDuration"
+                    name="slotDurationMinutes"
+                    placeholder="30"
+                    min="15"
+                    step="15"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="closeModal('clinicModal')"
+              >
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-success btn-glow">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Save Clinic
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Profile -->
+    <div class="modal-overlay hidden" id="profileModal">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">✏️ Edit Profile</div>
+          <button class="modal-close" onclick="closeModal('profileModal')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="profileForm" onsubmit="saveProfile(event)">
+            <!-- SECTION 1: Profile Photo -->
+            <div class="modal-form-section">
+              <div class="modal-form-section-header">📸 Profile Photo</div>
+              <div style="display: flex; gap: 16px; align-items: flex-start">
+                <div style="flex-shrink: 0">
+                  <div
+                    class="profile-photo-preview"
+                    id="photoPreview"
+                    style="
+                      width: 100px;
+                      height: 100px;
+                      border-radius: 12px;
+                      background: var(--bg-secondary);
+                      border: 2px solid var(--border);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-size: 40px;
+                      overflow: hidden;
+                    "
+                  >
+                    👨‍⚕️
+                  </div>
+                </div>
+                <div style="flex: 1">
+                  <input
+                    type="file"
+                    class="form-input"
+                    id="profilePhoto"
+                    accept="image/*"
+                    onchange="previewProfilePhoto(this)"
+                    style="display: none"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick="document.getElementById('profilePhoto').click()"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <path
+                        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                      />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    Choose Photo
+                  </button>
+                  <div class="profile-photo-help">
+                    Recommended: Square image, at least 200x200px
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION 2: Personal Information -->
+            <div class="modal-form-section">
+              <div class="modal-form-section-header">
+                👤 Personal Information
+              </div>
+
+              <!-- Full Name -->
+              <div class="form-group">
+                <label class="form-label">Full Name *</label>
+                <input
+                  type="text"
+                  class="form-input"
+                  id="editName"
+                  name="doctorName"
+                  placeholder="e.g., Doctor name"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- SECTION 3: Contact Information -->
+            <div class="modal-form-section">
+              <div class="modal-form-section-header">
+                📧 Contact Information
+              </div>
+
+              <!-- Email -->
+              <div class="form-group">
+                <label class="form-label">Email Address *</label>
+                <input
+                  type="email"
+                  class="form-input"
+                  id="editEmail"
+                  name="doctorEmail"
+                  placeholder="doctor@clinic.com"
+                  required
+                />
+              </div>
+
+              <!-- Phone -->
+              <div class="form-group">
+                <label class="form-label">Phone *</label>
+                <input
+                  type="tel"
+                  class="form-input"
+                  id="editPhone"
+                  name="doctorPhone"
+                  placeholder="+20 100 000 0000"
+                  required
+                />
+              </div>
+
+              <!-- Governorate -->
+              <div class="form-group">
+                <label class="form-label">Governorate</label>
+                <select class="form-select" id="editCity" name="doctorCity">
+                  <option value="">-- Select Governorate --</option>
+                  <option>Cairo</option>
+                  <option>Alexandria</option>
+                  <option>Giza</option>
+                  <option>Aswan</option>
+                  <option>Asyut</option>
+                  <option>Beheira</option>
+                  <option>Beni Suef</option>
+                  <option>Dakahlia</option>
+                  <option>Damietta</option>
+                  <option>Faiyum</option>
+                  <option>Gharbia</option>
+                  <option>Ismailia</option>
+                  <option>Kafr El Sheikh</option>
+                  <option>Luxor</option>
+                  <option>Matrouh</option>
+                  <option>Minya</option>
+                  <option>Monufia</option>
+                  <option>New Valley</option>
+                  <option>North Sinai</option>
+                  <option>Port Said</option>
+                  <option>Qalyubia</option>
+                  <option>Qena</option>
+                  <option>Red Sea</option>
+                  <option>Sharqia</option>
+                  <option>Sohag</option>
+                  <option>South Sinai</option>
+                  <option>Suez</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- SECTION 4: Security / Password -->
+            <div class="modal-form-section">
+              <div class="modal-form-section-header">🔐 Change Password</div>
+              <div
+                style="
+                  font-size: 12px;
+                  color: var(--text-muted);
+                  margin-bottom: var(--space-md);
+                "
+              >
+                Leave blank to keep your current password
+              </div>
+
+              <!-- Current Password -->
+              <div class="form-group">
+                <label class="form-label">Current Password *</label>
+                <input
+                  type="password"
+                  class="form-input"
+                  id="editCurrentPassword"
+                  name="currentPassword"
+                  placeholder="Enter your current password"
+                  required
+                />
+              </div>
+
+              <!-- New Password -->
+              <div class="form-group">
+                <label class="form-label">New Password</label>
+                <input
+                  type="password"
+                  class="form-input"
+                  id="editNewPassword"
+                  name="newPassword"
+                  placeholder="Enter new password (leave blank to keep current)"
+                />
+              </div>
+
+              <!-- Confirm New Password -->
+              <div class="form-group">
+                <label class="form-label">Confirm New Password</label>
+                <input
+                  type="password"
+                  class="form-input"
+                  id="editConfirmPassword"
+                  name="confirmNewPassword"
+                  placeholder="Confirm new password"
+                />
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="closeModal('profileModal')"
+              >
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary btn-glow">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Clinic Confirmation Modal -->
+    <div class="modal-overlay hidden" id="deleteClinicConfirmModal">
+      <div class="modal" style="max-width: 480px">
+        <div class="modal-header">
+          <div class="modal-title">Delete Clinic?</div>
+          <button
+            class="modal-close"
+            onclick="closeModal('deleteClinicConfirmModal')"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div style="padding: 16px 0; text-align: center">
+            <div style="font-size: 48px; margin-bottom: 16px">⚠️</div>
+            <div
+              style="
+                color: var(--text);
+                font-size: 16px;
+                font-weight: 600;
+                margin-bottom: 8px;
+              "
+            >
+              Are you sure?
+            </div>
+            <div
+              style="
+                color: var(--text-muted);
+                font-size: 14px;
+                line-height: 1.5;
+              "
+            >
+              This will permanently delete the clinic and all associated data.
+              This action cannot be undone.
+            </div>
+          </div>
+          <div class="modal-footer" style="margin-top: 24px">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              onclick="closeModal('deleteClinicConfirmModal')"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              onclick="confirmDeleteClinic()"
+              style="
+                background: var(--danger);
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+              "
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                style="vertical-align: middle"
+              >
+                <path
+                  d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h16zM10 11v6m4-6v6"
+                />
+              </svg>
+              Delete Clinic
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+  </body>
+</html>
