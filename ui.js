@@ -1,6 +1,13 @@
 // UTILS
 // ============================================================
-function toast(msg, type = "info", duration = 3500) {
+function toast(msg, type = "info", duration) {
+  const durations = {
+    success: 3000,
+    warning: 4000,
+    error: 5500,
+    info: 3500,
+  };
+  const total = duration ?? durations[type] ?? 3500;
   const c = document.getElementById("toastContainer");
   const t = document.createElement("div");
   t.className = `toast ${type}`;
@@ -8,23 +15,56 @@ function toast(msg, type = "info", duration = 3500) {
   t.innerHTML = `
     <span style="flex-shrink:0;">${icons[type] || "ℹ️"}</span>
     <span style="flex:1;">${msg}</span>
-    <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:0;line-height:1;flex-shrink:0;">✕</button>
+    <button type="button" aria-label="Dismiss notification" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:0;line-height:1;flex-shrink:0;">✕</button>
     <div class="toast-progress"></div>
   `;
   c.appendChild(t);
-  // Animate progress bar
   const prog = t.querySelector(".toast-progress");
-  prog.style.transition = `width ${duration}ms linear`;
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      prog.style.width = "0%";
-    });
-  });
-  const timer = setTimeout(() => {
+  let remaining = total;
+  let started = Date.now();
+  let timeoutId = null;
+  let paused = false;
+
+  const dismiss = () => {
     t.style.animation = "toast-out 0.3s ease forwards";
     setTimeout(() => t.remove(), 300);
-  }, duration);
-  t.addEventListener("mouseenter", () => clearTimeout(timer));
+  };
+
+  const startTimer = () => {
+    started = Date.now();
+    timeoutId = setTimeout(dismiss, remaining);
+    prog.style.transition = `width ${remaining}ms linear`;
+    prog.style.width = "100%";
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        prog.style.width = "0%";
+      });
+    });
+  };
+
+  const pauseTimer = () => {
+    if (paused) return;
+    paused = true;
+    clearTimeout(timeoutId);
+    remaining -= Date.now() - started;
+    const rect = prog.getBoundingClientRect();
+    const parent = prog.parentElement.getBoundingClientRect();
+    const pct = parent.width ? (rect.width / parent.width) * 100 : 0;
+    prog.style.transition = "none";
+    prog.style.width = `${pct}%`;
+  };
+
+  const resumeTimer = () => {
+    if (!paused) return;
+    paused = false;
+    startTimer();
+  };
+
+  startTimer();
+  t.addEventListener("mouseenter", pauseTimer);
+  t.addEventListener("mouseleave", resumeTimer);
+  t.addEventListener("focusin", pauseTimer);
+  t.addEventListener("focusout", resumeTimer);
 }
 
 function openModal(id) {

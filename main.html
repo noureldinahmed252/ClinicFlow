@@ -1353,19 +1353,6 @@
                   —
                 </div>
               </div>
-              <div class="cs-step-indicator">
-                <div class="cs-step active" data-step="1">
-                  <span>1</span> Patient
-                </div>
-                <div class="cs-step-line"></div>
-                <div class="cs-step" data-step="2">
-                  <span>2</span> Diagnosis
-                </div>
-                <div class="cs-step-line"></div>
-                <div class="cs-step" data-step="3">
-                  <span>3</span> Treatment
-                </div>
-              </div>
             </div>
 
             <!-- 3-column layout -->
@@ -1385,8 +1372,13 @@
                 <div class="cs-vitals" id="csVitals"></div>
 
                 <!-- Medical History -->
-                <div class="cs-panel">
-                  <div class="cs-panel-header">
+                <div class="cs-panel cs-collapsible is-open" data-cs-panel="history">
+                  <button
+                    type="button"
+                    class="cs-panel-header cs-panel-toggle"
+                    aria-expanded="true"
+                    aria-controls="csHistory"
+                  >
                     <div
                       class="cs-panel-icon"
                       style="
@@ -1405,14 +1397,24 @@
                         <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
                       </svg>
                     </div>
-                    Medical History
+                    <span class="cs-panel-title">Medical History</span>
+                    <span class="cs-panel-chevron" aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                  </button>
+                  <div class="cs-panel-body">
+                    <div id="csHistory"></div>
                   </div>
-                  <div id="csHistory"></div>
                 </div>
 
                 <!-- Previous Visits -->
-                <div class="cs-panel">
-                  <div class="cs-panel-header">
+                <div class="cs-panel cs-collapsible is-open" data-cs-panel="visits">
+                  <button
+                    type="button"
+                    class="cs-panel-header cs-panel-toggle"
+                    aria-expanded="true"
+                    aria-controls="csVisits"
+                  >
                     <div
                       class="cs-panel-icon"
                       style="
@@ -1432,9 +1434,45 @@
                         <polyline points="12 6 12 12 16 14" />
                       </svg>
                     </div>
-                    Previous Visits
+                    <span class="cs-panel-title">Previous Visits</span>
+                    <span class="cs-panel-chevron" aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                  </button>
+                  <div class="cs-panel-body">
+                    <div id="csVisits"></div>
                   </div>
-                  <div id="csVisits"></div>
+                </div>
+
+                <!-- Activity Log -->
+                <div class="cs-panel cs-activity-panel">
+                  <div class="cs-panel-header">
+                    <div
+                      class="cs-panel-icon"
+                      style="
+                        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+                      "
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      >
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                      </svg>
+                    </div>
+                    <span class="cs-panel-title">Activity Log</span>
+                  </div>
+                  <div class="cs-activity-log" id="csActivityLog">
+                    <div class="cs-activity-empty">Session activity will appear here.</div>
+                  </div>
                 </div>
               </div>
 
@@ -1482,6 +1520,10 @@
                       <div class="autocomplete-dropdown" id="diagDrop"></div>
                     </div>
                     <div id="selectedDiagnoses" class="cs-tags-wrap"></div>
+                    <div class="cs-empty-state" id="diagEmptyState" aria-live="polite">
+                      <span class="cs-empty-icon">🩺</span>
+                      <p>No diagnosis selected</p>
+                    </div>
                   </div>
 
                   <!-- Medications Block -->
@@ -1530,78 +1572,48 @@
                       </div>
                       <div class="autocomplete-dropdown" id="drugDrop"></div>
                     </div>
-                    <div class="cs-med-builder">
-                      <div class="cs-med-select-wrap">
-                        <label class="cs-med-lbl">Dose</label>
-                        <input
-                          type="text"
-                          class="cs-med-sel"
-                          id="medDose"
-                          name="dose"
-                          placeholder="500mg"
-                        />
-                      </div>
-                      <div class="cs-med-select-wrap">
-                        <label class="cs-med-lbl">Frequency</label>
-                        <select
-                          class="cs-med-sel"
-                          id="medFrequency"
-                          name="frequency"
-                        >
-                          <option value="">-- Select --</option>
-                          <option value="Once Daily">Once Daily</option>
-                          <option value="Twice Daily">Twice Daily</option>
-                          <option value="3x Daily">3x Daily</option>
-                          <option value="4x Daily">4x Daily</option>
-                          <option value="As Needed">As Needed</option>
-                        </select>
-                      </div>
-                      <div class="cs-med-select-wrap">
-                        <label class="cs-med-lbl">Timing</label>
-                        <select class="cs-med-sel" id="medTiming" name="timing">
-                          <option value="">-- Select --</option>
-                          <option value="Anytime">Anytime</option>
-                          <option value="Before Food">Before Food</option>
-                          <option value="After Food">After Food</option>
-                        </select>
-                      </div>
-                      <div class="cs-med-select-wrap">
-                        <label class="cs-med-lbl">Days</label>
-                        <input
-                          type="number"
-                          class="cs-med-sel"
-                          id="medDays"
-                          name="days"
-                          min="1"
-                          placeholder="7"
-                        />
-                      </div>
-                      <div class="cs-med-select-wrap">
-                        <label class="cs-med-lbl">Form</label>
-                        <select class="cs-med-sel" id="medForm" name="form">
-                          <option value="">-- Select --</option>
-                          <option value="Tablet">Tablet</option>
-                          <option value="Capsule">Capsule</option>
-                          <option value="Syrup">Syrup</option>
-                          <option value="Injection">Injection</option>
-                          <option value="Cream">Cream</option>
-                          <option value="Ointment">Ointment</option>
-                        </select>
-                      </div>
+                    <div class="cs-med-search-actions">
                       <button
                         type="button"
-                        class="btn btn-success"
+                        class="btn btn-success cs-add-med-btn"
                         onclick="addMedication()"
-                        style="
-                          padding: 8px 12px;
-                          font-size: 12px;
-                          align-self: end;
-                        "
                       >
-                        Add
+                        + Add Medication
                       </button>
                     </div>
+                    <div class="cs-med-sync-fields" aria-hidden="true">
+                      <input type="text" id="medDose" name="dose" tabindex="-1" />
+                      <select id="medFrequency" name="frequency" tabindex="-1">
+                        <option value=""></option>
+                        <option value="Once Daily">Once Daily</option>
+                        <option value="Twice Daily">Twice Daily</option>
+                        <option value="3x Daily">3x Daily</option>
+                        <option value="4x Daily">4x Daily</option>
+                        <option value="As Needed">As Needed</option>
+                      </select>
+                      <select id="medTiming" name="timing" tabindex="-1">
+                        <option value=""></option>
+                        <option value="Anytime">Anytime</option>
+                        <option value="Before Food">Before Food</option>
+                        <option value="After Food">After Food</option>
+                      </select>
+                      <input type="number" id="medDays" name="days" tabindex="-1" />
+                      <select id="medForm" name="form" tabindex="-1">
+                        <option value=""></option>
+                        <option value="Tablet">Tablet</option>
+                        <option value="Capsule">Capsule</option>
+                        <option value="Syrup">Syrup</option>
+                        <option value="Injection">Injection</option>
+                        <option value="Cream">Cream</option>
+                        <option value="Ointment">Ointment</option>
+                      </select>
+                    </div>
                     <div id="selectedMeds" class="cs-meds-wrap"></div>
+                    <div class="cs-empty-state" id="medEmptyState" aria-live="polite">
+                      <span class="cs-empty-icon">💊</span>
+                      <p><strong>No medications added yet</strong></p>
+                      <p class="cs-empty-sub">Start by searching for medication</p>
+                    </div>
                   </div>
 
                   <!-- Notes + Condition in a grid -->
@@ -1636,34 +1648,31 @@
                         id="csNotes"
                         name="notes"
                         placeholder="Write your clinical notes here..."
+                        oninput="updateConsultationEmptyStates()"
                       ></textarea>
+                      <div class="cs-empty-state cs-empty-inline" id="notesEmptyState" aria-live="polite">
+                        <span class="cs-empty-icon">📝</span>
+                        <p>No clinical notes</p>
+                      </div>
                     </div>
-                    <div class="cs-form-block">
+                    <div class="cs-form-block cs-critical-block">
+                      <div class="cs-critical-stripe" aria-hidden="true"></div>
                       <div class="cs-block-header">
-                        <div
-                          class="cs-block-num"
-                          style="
-                            background: linear-gradient(
-                              135deg,
-                              #06b6d4,
-                              #0891b2
-                            );
-                          "
-                        >
-                          05
-                        </div>
+                        <div class="cs-block-num cs-block-num-critical">05</div>
                         <div>
-                          <div class="cs-block-title">Disease Description</div>
-                          <div class="cs-block-sub">
-                            Clinical disease summary
+                          <div class="cs-block-title cs-critical-title">
+                            ⚠ Critical / Unusual Symptoms
+                          </div>
+                          <div class="cs-block-sub cs-critical-sub">
+                            Document urgent or atypical presentation
                           </div>
                         </div>
                       </div>
                       <textarea
-                        class="cs-textarea"
+                        class="cs-textarea cs-critical-textarea"
                         id="csDiseaseDescription"
                         name="diseaseDescription"
-                        placeholder="Describe the disease presentation and assessment..."
+                        placeholder="Describe critical or unusual symptoms requiring immediate attention..."
                       ></textarea>
                       <!-- Condition picker kept hidden for legacy stored records only -->
                       <div
@@ -1743,7 +1752,7 @@
                   </div>
 
                   <!-- Submit bar -->
-                  <div class="cs-submit-bar">
+                  <div class="cs-submit-bar cs-submit-bar-sticky">
                     <div class="cs-submit-info">
                       <svg
                         width="14"
@@ -1775,8 +1784,10 @@
                       <button
                         type="submit"
                         class="btn btn-success btn-glow cs-submit-btn"
+                        id="csSaveBtn"
                       >
                         <svg
+                          class="cs-save-icon"
                           width="15"
                           height="15"
                           viewBox="0 0 24 24"
@@ -1787,7 +1798,7 @@
                         >
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
-                        Save Consultation
+                        <span class="cs-save-label">Save Consultation</span>
                       </button>
                     </div>
                   </div>
@@ -2920,6 +2931,34 @@
               Delete Clinic
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remove Medication Confirm -->
+    <div class="modal-overlay hidden" id="medRemoveConfirmModal">
+      <div class="modal modal-sm cs-confirm-modal">
+        <div class="modal-header">
+          <h3>Remove Medication?</h3>
+        </div>
+        <p class="cs-confirm-text" id="medRemoveConfirmText">
+          This medication will be removed from the prescription.
+        </p>
+        <div class="modal-footer cs-confirm-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            onclick="closeModal('medRemoveConfirmModal')"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn btn-danger"
+            id="medRemoveConfirmBtn"
+          >
+            Remove
+          </button>
         </div>
       </div>
     </div>

@@ -30,6 +30,174 @@ const csAutocomplete = {
   medication: { index: -1, results: [] },
 };
 
+let pendingMedRemoveIndex = null;
+
+const MED_FREQUENCY_OPTIONS = [
+  "",
+  "Once Daily",
+  "Twice Daily",
+  "3x Daily",
+  "4x Daily",
+  "As Needed",
+];
+const MED_TIMING_OPTIONS = ["", "Anytime", "Before Food", "After Food"];
+const MED_FORM_OPTIONS = [
+  "",
+  "Tablet",
+  "Capsule",
+  "Syrup",
+  "Injection",
+  "Cream",
+  "Ointment",
+];
+
+function escapeConsultHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function getBmiTone(bmi) {
+  if (!bmi) return "neutral";
+  if (bmi.cls === "bmi-normal") return "normal";
+  if (bmi.cls === "bmi-obese") return "critical";
+  return "medium";
+}
+
+function severityLabel(severity) {
+  const map = {
+    low: "Low",
+    mild: "Mild",
+    medium: "Medium",
+    moderate: "Moderate",
+    high: "High",
+    severe: "Severe",
+  };
+  return map[severity] || severity || "Unknown";
+}
+
+function logConsultationActivity(message, tone = "info") {
+  const log = document.getElementById("csActivityLog");
+  if (!log) return;
+  const empty = log.querySelector(".cs-activity-empty");
+  if (empty) empty.remove();
+  const item = document.createElement("div");
+  item.className = `cs-activity-item cs-activity-${tone}`;
+  const time = new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  item.innerHTML = `<span class="cs-activity-time">${time}</span><span class="cs-activity-msg">${escapeConsultHtml(message)}</span>`;
+  log.prepend(item);
+  while (log.children.length > 12) log.lastElementChild?.remove();
+}
+
+function updateConsultationEmptyStates() {
+  const diagEmpty = document.getElementById("diagEmptyState");
+  const medEmpty = document.getElementById("medEmptyState");
+  const notesEmpty = document.getElementById("notesEmptyState");
+  if (diagEmpty)
+    diagEmpty.classList.toggle("visible", !csState.diagnoses.length);
+  if (medEmpty)
+    medEmpty.classList.toggle("visible", !csState.medications.length);
+  const notesVal = document.getElementById("csNotes")?.value.trim() || "";
+  if (notesEmpty) notesEmpty.classList.toggle("visible", !notesVal);
+}
+
+function initConsultationCollapsibles() {
+  document.querySelectorAll(".cs-collapsible .cs-panel-toggle").forEach((btn) => {
+    if (btn.dataset.bound === "1") return;
+    btn.dataset.bound = "1";
+    btn.addEventListener("click", () => {
+      const panel = btn.closest(".cs-collapsible");
+      if (!panel) return;
+      const isOpen = panel.classList.toggle("is-open");
+      btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
+  });
+}
+
+function setConsultationSaveLoading(loading) {
+  const btn = document.getElementById("csSaveBtn");
+  const label = btn?.querySelector(".cs-save-label");
+  if (!btn) return;
+  btn.classList.toggle("loading", loading);
+  btn.disabled = !!loading;
+  if (label) label.textContent = loading ? "Saving..." : "Save Consultation";
+}
+
+function flashConsultationSaved() {
+  const btn = document.getElementById("csSaveBtn");
+  const label = btn?.querySelector(".cs-save-label");
+  if (!label) return;
+  label.textContent = "Saved ✓";
+  btn.classList.add("is-saved");
+  setTimeout(() => {
+    btn.classList.remove("is-saved");
+    label.textContent = "Save Consultation";
+  }, 1200);
+}
+
+function medSelectOptions(values, selected) {
+  return values
+    .map((value) => {
+      const label = value || "-- Select --";
+      const sel = String(selected || "") === value ? " selected" : "";
+      return `<option value="${escapeConsultHtml(value)}"${sel}>${escapeConsultHtml(label)}</option>`;
+    })
+    .join("");
+}
+
+function syncMedicationToHiddenFields(med) {
+  const doseEl = document.getElementById("medDose");
+  const freqEl = document.getElementById("medFrequency");
+  const timingEl = document.getElementById("medTiming");
+  const daysEl = document.getElementById("medDays");
+  const formEl = document.getElementById("medForm");
+  if (doseEl) doseEl.value = med?.dose || "";
+  if (freqEl) freqEl.value = med?.frequency || "";
+  if (timingEl) timingEl.value = med?.timing || "";
+  if (daysEl) daysEl.value = med?.days ?? "";
+  if (formEl) formEl.value = med?.form || "";
+}
+
+function readMedCardFields(index) {
+  const card = document.querySelector(
+    `.cs-med-card[data-med-index="${index}"]`,
+  );
+  if (!card) return {};
+  const val = (field) =>
+    card.querySelector(`[data-field="${field}"]`)?.value?.trim() || "";
+  return {
+    dose: val("dose"),
+    frequency: val("frequency"),
+    timing: val("timing"),
+    days: val("days"),
+    form: val("form"),
+  };
+}
+
+function medSummaryBadges(med) {
+  const badges = [
+    ["Dose", med.dose],
+    ["Frequency", med.frequency],
+    ["Days", med.days ? `${med.days}d` : ""],
+    ["Timing", med.timing],
+    ["Form", med.form],
+  ].filter(([, value]) => value);
+  if (!badges.length) {
+    return '<span class="cs-med-badge cs-med-badge-muted">No dosage configured</span>';
+  }
+  return badges
+    .map(
+      ([label, value]) =>
+        `<span class="cs-med-badge" title="${escapeConsultHtml(label)}">${escapeConsultHtml(value)}</span>`,
+    )
+    .join("");
+}
+
 function normalizeDiseaseOption(disease = {}) {
   return {
     id: disease.id ?? disease.diseaseId,
@@ -79,7 +247,14 @@ function setLookupHint(message, type = "info") {
     .filter(Boolean);
   containers.forEach((el) => {
     if (!el.children.length) {
-      el.innerHTML = `<div class="cs-inline-state ${type}">${message}</div>`;
+      if (type === "loading") {
+        el.innerHTML = `<div class="cs-skeleton-stack" aria-busy="true" aria-label="Loading">
+          <div class="cs-skeleton cs-skeleton-line"></div>
+          <div class="cs-skeleton cs-skeleton-line short"></div>
+        </div>`;
+      } else {
+        el.innerHTML = `<div class="cs-inline-state ${type}">${message}</div>`;
+      }
     }
   });
 }
@@ -87,7 +262,8 @@ function setLookupHint(message, type = "info") {
 function clearLookupHints() {
   ["selectedDiagnoses", "selectedMeds"].forEach((id) => {
     const el = document.getElementById(id);
-    if (el?.querySelector(".cs-inline-state")) el.innerHTML = "";
+    if (el?.querySelector(".cs-inline-state, .cs-skeleton-stack"))
+      el.innerHTML = "";
   });
 }
 
@@ -160,10 +336,16 @@ async function loadConsultationLookups() {
 
 function resetConsultationForm() {
   csState = { diagnoses: [], medications: [], selectedMedicine: null };
+  pendingMedRemoveIndex = null;
   ["selectedDiagnoses", "selectedMeds"].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = "";
   });
+  const activityLog = document.getElementById("csActivityLog");
+  if (activityLog) {
+    activityLog.innerHTML =
+      '<div class="cs-activity-empty">Session activity will appear here.</div>';
+  }
   [
     "diagSearch",
     "drugSearch",
@@ -183,6 +365,8 @@ function resetConsultationForm() {
     const el = document.getElementById(id);
     if (el) el.style.display = "none";
   });
+  updateConsultationEmptyStates();
+  setConsultationSaveLoading(false);
 }
 
 async function startConsultation(apptId) {
@@ -236,47 +420,44 @@ async function startConsultation(apptId) {
 
   const vitalsEl = document.getElementById("csVitals");
   if (vitalsEl) {
+    const bmiTone = getBmiTone(bmi);
     const vitals = [
       {
-        icon: "kg",
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18"/><path d="M8 7h8"/><path d="M7 21h10"/></svg>`,
         val: patient.weight ? `${patient.weight} kg` : "-",
         lbl: "Weight",
-        bg: "#dbeafe",
+        cls: "cs-vital-weight",
       },
       {
-        icon: "cm",
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20"/><path d="M8 6h8"/><path d="M9 18h6"/></svg>`,
         val: patient.height ? `${patient.height} cm` : "-",
         lbl: "Height",
-        bg: "#dcfce7",
+        cls: "cs-vital-height",
       },
       {
-        icon: "BMI",
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19h16"/><path d="M7 15l3-6 3 4 4-8"/></svg>`,
         val: bmi ? bmi.bmi : "-",
-        lbl: `BMI - ${bmi ? bmi.label : ""}`,
-        bg: bmi
-          ? {
-              normal: "#dcfce7",
-              overweight: "#fef9c3",
-              obese: "#fee2e2",
-              underweight: "#ede9fe",
-            }[bmi.cls.replace("bmi-", "")]
-          : "#f1f5f9",
+        lbl: bmi ? `BMI · ${bmi.label}` : "BMI",
+        cls: `cs-vital-bmi cs-vital-bmi-${bmiTone}`,
       },
       {
-        icon: "BT",
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l7 4v6c0 5-3.5 9-7 10C8.5 21 5 17 5 12V6z"/></svg>`,
         val: patient.bloodType || "-",
         lbl: "Blood Type",
-        bg: "#fee2e2",
+        cls: "cs-vital-blood",
+        badge: patient.bloodType
+          ? `<span class="cs-blood-badge">${escapeConsultHtml(patient.bloodType)}</span>`
+          : "",
       },
     ];
     vitalsEl.innerHTML = vitals
       .map(
         (v) => `
-      <div class="cs-vital-item">
-        <div class="cs-vital-icon" style="background:${v.bg};">${v.icon}</div>
-        <div>
-          <div class="cs-vital-val">${v.val}</div>
+      <div class="cs-vital-item ${v.cls}">
+        <div class="cs-vital-icon">${v.icon}</div>
+        <div class="cs-vital-body">
           <div class="cs-vital-lbl">${v.lbl}</div>
+          <div class="cs-vital-val">${v.badge || escapeConsultHtml(v.val)}</div>
         </div>
       </div>`,
       )
@@ -314,6 +495,9 @@ async function startConsultation(apptId) {
         .join("")
     : '<div class="empty-state" style="padding:20px 0;"><span class="icon" style="font-size:28px;">First</span><p>First visit</p></div>';
 
+  initConsultationCollapsibles();
+  updateConsultationEmptyStates();
+  logConsultationActivity(`Consultation opened for ${patient.name}`, "info");
   showApp("consultation");
   loadConsultationLookups();
 }
@@ -372,6 +556,7 @@ function addDiagnosisById(id) {
     severity: disease.severity,
   });
   renderDiagnoses();
+  logConsultationActivity(`Diagnosis added: ${disease.name}`, "success");
   document.getElementById("diagSearch").value = "";
   document.getElementById("diagDrop").style.display = "none";
 }
@@ -397,10 +582,13 @@ function renderDiagnoses() {
     .map(
       (d) =>
         `<span class="tag disease-tag ${d.severity}">
-      <span>${d.name}</span><span class="severity-dot"></span><button class="remove" onclick="removeDiagnosis('${jsArg(d.id)}')">x</button>
+      <span>${escapeConsultHtml(d.name)}</span>
+      <span class="severity-pill ${d.severity}">${severityLabel(d.severity)}</span>
+      <button type="button" class="remove" aria-label="Remove diagnosis" onclick="removeDiagnosis('${jsArg(d.id)}')">×</button>
     </span>`,
     )
     .join("");
+  updateConsultationEmptyStates();
 }
 
 async function searchDrug(q) {
@@ -463,35 +651,136 @@ function addMedication() {
     toast("This medicine is already selected", "info");
     return;
   }
-  csState.medications.push({ id: medicine.id, name: medicine.name });
+  csState.medications.push({
+    id: medicine.id,
+    name: medicine.name,
+    dose: "",
+    frequency: "",
+    timing: "",
+    days: "",
+    form: "",
+    collapsed: false,
+    applied: false,
+  });
   renderMeds();
   csState.selectedMedicine = null;
   document.getElementById("drugSearch").value = "";
+  logConsultationActivity(`Medication added: ${medicine.name}`, "info");
+  updateConsultationEmptyStates();
+}
+
+function requestRemoveMedication(index) {
+  const med = csState.medications[index];
+  if (!med) return;
+  pendingMedRemoveIndex = index;
+  const text = document.getElementById("medRemoveConfirmText");
+  if (text) text.textContent = `Remove ${med.name} from this prescription?`;
+  const btn = document.getElementById("medRemoveConfirmBtn");
+  if (btn && !btn.dataset.bound) {
+    btn.dataset.bound = "1";
+    btn.addEventListener("click", () => {
+      if (pendingMedRemoveIndex !== null) {
+        removeMedication(pendingMedRemoveIndex);
+        pendingMedRemoveIndex = null;
+      }
+      closeModal("medRemoveConfirmModal");
+    });
+  }
+  openModal("medRemoveConfirmModal");
 }
 
 function removeMedication(index) {
+  const med = csState.medications[index];
   csState.medications.splice(index, 1);
   renderMeds();
+  updateConsultationEmptyStates();
+  if (med) logConsultationActivity(`Medication removed: ${med.name}`, "warning");
+}
+
+function toggleMedCard(index) {
+  const med = csState.medications[index];
+  if (!med) return;
+  med.collapsed = !med.collapsed;
+  renderMeds();
+}
+
+function applyMedication(index) {
+  const med = csState.medications[index];
+  if (!med) return;
+  const fields = readMedCardFields(index);
+  Object.assign(med, fields, { applied: true, collapsed: true });
+  syncMedicationToHiddenFields(med);
+  renderMeds();
+  logConsultationActivity(`Medication applied: ${med.name}`, "success");
+  const btn = document.querySelector(
+    `.cs-med-card[data-med-index="${index}"] .cs-med-apply-btn`,
+  );
+  if (btn) {
+    btn.classList.add("is-applied");
+    const label = btn.querySelector(".cs-med-apply-label");
+    if (label) label.textContent = "✓ Applied";
+    setTimeout(() => {
+      btn.classList.remove("is-applied");
+      if (label) label.textContent = "Apply Medication";
+    }, 1000);
+  }
 }
 
 function renderMeds() {
   const container = document.getElementById("selectedMeds");
   if (!container) return;
   container.innerHTML = csState.medications
-    .map(
-      (m, i) => `
-    <div class="cs-med-card" style="animation:fade-up 0.2s ease both;">
+    .map((m, i) => {
+      const collapsed = !!m.collapsed;
+      const summary = medSummaryBadges(m);
+      return `
+    <div class="cs-med-card${collapsed ? " is-collapsed" : ""}" data-med-index="${i}" style="animation:fade-up 0.2s ease both;">
       <div class="cs-med-header">
-        <div class="cs-med-icon">Rx</div>
-        <div class="cs-med-name">${m.name}</div>
-        <button type="button" class="cs-med-remove" onclick="removeMedication(${i})" title="Remove">
+        <button type="button" class="cs-med-toggle" onclick="toggleMedCard(${i})" aria-expanded="${!collapsed}" aria-label="Expand or collapse medication">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="cs-med-icon">💊</div>
+        <div class="cs-med-title-wrap">
+          <div class="cs-med-name">${escapeConsultHtml(m.name)}</div>
+          <div class="cs-med-summary">${summary}</div>
+        </div>
+        <button type="button" class="cs-med-remove" onclick="requestRemoveMedication(${i})" title="Remove medication" aria-label="Remove medication">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <div style="font-size:12.5px;color:var(--text-muted);">Uses the shared medication details below.</div>
-    </div>`,
-    )
+      <div class="cs-med-body"${collapsed ? ' hidden' : ""}>
+        <div class="cs-med-fields">
+          <div class="cs-med-select-wrap">
+            <label class="cs-med-lbl">Dose</label>
+            <input type="text" class="cs-med-sel" data-field="dose" value="${escapeConsultHtml(m.dose || "")}" placeholder="500mg" />
+          </div>
+          <div class="cs-med-select-wrap">
+            <label class="cs-med-lbl">Frequency</label>
+            <select class="cs-med-sel" data-field="frequency">${medSelectOptions(MED_FREQUENCY_OPTIONS, m.frequency)}</select>
+          </div>
+          <div class="cs-med-select-wrap">
+            <label class="cs-med-lbl">Timing</label>
+            <select class="cs-med-sel" data-field="timing">${medSelectOptions(MED_TIMING_OPTIONS, m.timing)}</select>
+          </div>
+          <div class="cs-med-select-wrap">
+            <label class="cs-med-lbl">Days</label>
+            <input type="number" class="cs-med-sel" data-field="days" min="1" value="${escapeConsultHtml(m.days || "")}" placeholder="7" />
+          </div>
+          <div class="cs-med-select-wrap">
+            <label class="cs-med-lbl">Form</label>
+            <select class="cs-med-sel" data-field="form">${medSelectOptions(MED_FORM_OPTIONS, m.form)}</select>
+          </div>
+        </div>
+        <div class="cs-med-actions">
+          <button type="button" class="btn btn-success cs-med-apply-btn" onclick="applyMedication(${i})">
+            <span class="cs-med-apply-label">Apply Medication</span>
+          </button>
+        </div>
+      </div>
+    </div>`;
+    })
     .join("");
+  updateConsultationEmptyStates();
 }
 
 function handleAutocompleteKeydown(type, event) {
@@ -575,8 +864,15 @@ function validateCompletionPayload(payload) {
   return "";
 }
 
+function syncLastAppliedMedicationFields() {
+  const applied = [...csState.medications].reverse().find((m) => m.applied);
+  const source = applied || csState.medications[csState.medications.length - 1];
+  if (source) syncMedicationToHiddenFields(source);
+}
+
 async function saveConsultation(e) {
   e.preventDefault();
+  syncLastAppliedMedicationFields();
   const apptId = document.getElementById("csApptId").value;
   const appt = DB.get("appointments")
     .map(normalizeAppointment)
@@ -601,8 +897,10 @@ async function saveConsultation(e) {
     return;
   }
 
-  const submitBtn = e.target.querySelector('button[type="submit"]');
-  setAuthLoading(submitBtn, true);
+  const submitBtn =
+    document.getElementById("csSaveBtn") ||
+    e.target.querySelector('button[type="submit"]');
+  setConsultationSaveLoading(true);
 
   try {
     await apiFn("completeAppointment")(apptId, payload);
@@ -646,7 +944,9 @@ async function saveConsultation(e) {
       console.warn("Appointment refresh after completion failed:", error);
     }
 
+    flashConsultationSaved();
     toast("Appointment completed successfully.", "success");
+    logConsultationActivity("Consultation saved successfully", "success");
     updatePendingBadge();
     if (currentAppPage === "dashboard") renderDashboard();
     if (currentAppPage === "calendar") renderCalendar();
@@ -654,13 +954,15 @@ async function saveConsultation(e) {
   } catch (error) {
     toast(error?.message || "Failed to complete appointment.", "error");
   } finally {
-    setAuthLoading(submitBtn, false);
+    setConsultationSaveLoading(false);
   }
 }
 
 function setCondition() {}
 
 document.addEventListener("DOMContentLoaded", () => {
+  initConsultationCollapsibles();
+  updateConsultationEmptyStates();
   const diagInput = document.getElementById("diagSearch");
   const drugInput = document.getElementById("drugSearch");
   if (diagInput)
