@@ -168,9 +168,6 @@ function launchApp() {
   startClock();
   initScrollProgress();
   updatePendingBadge();
-  initSparkle();
-  setTimeout(addRipples, 300);
-  setTimeout(initTilt, 400);
   if (
     typeof loadConsultationLookups === "function" &&
     localStorage.getItem("authToken")

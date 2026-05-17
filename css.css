@@ -48,6 +48,17 @@
   --radius-lg: 22px;
   --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.12);
   --shadow-hover: 0 12px 32px rgba(14, 165, 233, 0.18);
+
+  /* Appointment status (Phase 1) */
+  --status-pending: #f59e0b;
+  --status-pending-bg: rgba(245, 158, 11, 0.14);
+  --status-pending-border: rgba(245, 158, 11, 0.35);
+  --status-completed: #10b981;
+  --status-completed-bg: rgba(16, 185, 129, 0.14);
+  --status-completed-border: rgba(16, 185, 129, 0.35);
+  --status-cancelled: #ef4444;
+  --status-cancelled-bg: rgba(239, 68, 68, 0.14);
+  --status-cancelled-border: rgba(239, 68, 68, 0.35);
 }
 
 [data-theme="dark"] {
@@ -69,6 +80,13 @@
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2), 0 4px 20px rgba(0, 0, 0, 0.15);
   --toggle-bg: #0d1829;
   --toggle-track-dark: #0ea5e9;
+
+  --status-pending-bg: rgba(245, 158, 11, 0.18);
+  --status-pending-border: rgba(245, 158, 11, 0.45);
+  --status-completed-bg: rgba(16, 185, 129, 0.18);
+  --status-completed-border: rgba(16, 185, 129, 0.45);
+  --status-cancelled-bg: rgba(239, 68, 68, 0.18);
+  --status-cancelled-border: rgba(239, 68, 68, 0.45);
 }
 
 *,
@@ -7303,4 +7321,994 @@ input[type="time"] {
   .cs-med-fields {
     grid-template-columns: 1fr;
   }
+}
+
+/* ============================================================
+   Phase 1 UI polish
+   ============================================================ */
+
+/* --- 1. Global status colors --- */
+.badge-pending {
+  background: var(--status-pending-bg) !important;
+  color: var(--status-pending) !important;
+  border: 1px solid var(--status-pending-border);
+}
+.badge-done {
+  background: var(--status-completed-bg) !important;
+  color: var(--status-completed) !important;
+  border: 1px solid var(--status-completed-border);
+}
+.badge-cancelled {
+  background: var(--status-cancelled-bg) !important;
+  color: var(--status-cancelled) !important;
+  border: 1px solid var(--status-cancelled-border);
+}
+
+.appointment-item[data-status="pending"]::before {
+  background: var(--status-pending) !important;
+}
+.appointment-item[data-status="completed"]::before {
+  background: var(--status-completed) !important;
+}
+.appointment-item[data-status="cancelled"]::before {
+  background: var(--status-cancelled) !important;
+}
+
+.cal-stats-strip .cal-stat-chip:nth-child(1) .cal-stat-dot {
+  background: var(--status-pending) !important;
+}
+.cal-stats-strip .cal-stat-chip:nth-child(2) .cal-stat-dot {
+  background: var(--status-cancelled) !important;
+}
+.cal-stats-strip .cal-stat-chip:nth-child(3) .cal-stat-dot {
+  background: var(--status-completed) !important;
+}
+
+.cal-appt-card[data-status="pending"] {
+  border-left-color: var(--status-pending) !important;
+}
+.cal-appt-card[data-status="completed"] {
+  border-left-color: var(--status-completed) !important;
+}
+.cal-appt-card[data-status="cancelled"] {
+  border-left-color: var(--status-cancelled) !important;
+}
+.cal-appt-card[data-status="pending"] .cal-appt-badge {
+  background: var(--status-pending-bg) !important;
+  color: var(--status-pending) !important;
+  border: 1px solid var(--status-pending-border);
+}
+.cal-appt-card[data-status="completed"] .cal-appt-badge {
+  background: var(--status-completed-bg) !important;
+  color: var(--status-completed) !important;
+  border: 1px solid var(--status-completed-border);
+}
+.cal-appt-card[data-status="cancelled"] .cal-appt-badge {
+  background: var(--status-cancelled-bg) !important;
+  color: var(--status-cancelled) !important;
+  border: 1px solid var(--status-cancelled-border);
+}
+
+.appt-status-btn.active[data-val="Pending"] {
+  background: var(--status-pending-bg) !important;
+  border-color: var(--status-pending) !important;
+  color: var(--status-pending) !important;
+}
+.appt-status-btn.active[data-val="Completed"] {
+  background: var(--status-completed-bg) !important;
+  border-color: var(--status-completed) !important;
+  color: var(--status-completed) !important;
+}
+.appt-status-btn.active[data-val="Cancelled"] {
+  background: var(--status-cancelled-bg) !important;
+  border-color: var(--status-cancelled) !important;
+  color: var(--status-cancelled) !important;
+}
+
+.cal-done-tag {
+  color: var(--status-completed);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* --- 2. Active sidebar --- */
+.sidebar .nav-item {
+  position: relative;
+  transition:
+    background 0.22s ease,
+    color 0.22s ease,
+    transform 0.22s ease;
+}
+.sidebar .nav-item.active {
+  background: rgba(14, 165, 233, 0.18) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  border-radius: 12px;
+  border-left: none !important;
+  box-shadow: inset 0 0 0 1px rgba(14, 165, 233, 0.25);
+}
+.sidebar .nav-item.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 60%;
+  min-height: 22px;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(180deg, #38bdf8, var(--status-completed));
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.45);
+  animation: none;
+}
+
+/* --- 3. Dashboard stat cards --- */
+.stats-grid .stat-card {
+  cursor: pointer;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+.stats-grid .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    var(--shadow-lg),
+    0 10px 28px rgba(15, 23, 42, 0.1);
+  border-color: rgba(14, 165, 233, 0.22);
+}
+.stats-grid .stat-card:active {
+  transform: translateY(-1px);
+}
+
+/* --- 4. Patients table --- */
+.data-table tbody tr {
+  min-height: 48px;
+  transition: background 0.18s ease;
+}
+.data-table tbody tr:nth-child(even) {
+  background: rgba(148, 163, 184, 0.06);
+}
+[data-theme="dark"] .data-table tbody tr:nth-child(even) {
+  background: rgba(148, 163, 184, 0.04);
+}
+.data-table tbody tr:hover {
+  background: var(--primary-light) !important;
+}
+.data-table tbody td {
+  padding: 14px 16px;
+  min-height: 48px;
+  vertical-align: middle;
+}
+
+/* --- 5. Password visibility toggle --- */
+.password-field-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+.password-field-wrap .form-input {
+  width: 100%;
+  padding-right: 44px;
+}
+.password-toggle-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+.password-toggle-btn:hover {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+.password-toggle-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.password-toggle-icon {
+  display: block;
+}
+.password-toggle-btn .icon-hide {
+  display: none;
+}
+.password-toggle-btn.is-visible .icon-show {
+  display: none;
+}
+.password-toggle-btn.is-visible .icon-hide {
+  display: block;
+}
+[data-theme="dark"] .password-toggle-btn:hover {
+  background: rgba(14, 165, 233, 0.12);
+}
+
+.stats-grid .stat-card:has(#statDone) .stat-icon.purple {
+  background: var(--status-completed-bg);
+}
+.stats-grid .stat-card:has(#statDone) .stat-icon.purple svg {
+  stroke: var(--status-completed);
+}
+.stats-grid .stat-card:has(#statDone) .mini-line {
+  background: var(--status-completed);
+}
+
+/* ============================================================
+   Phase 2 UI polish
+   ============================================================ */
+
+/* --- 1. Consultation autocomplete (diagDrop / drugDrop) --- */
+.cs-form-block:has(.autocomplete-wrapper:focus-within) {
+  position: relative;
+  z-index: 8;
+  overflow: visible;
+}
+
+.autocomplete-wrapper {
+  z-index: 1;
+}
+
+.autocomplete-wrapper:focus-within {
+  z-index: 40;
+}
+
+#diagDrop,
+#drugDrop,
+.autocomplete-dropdown {
+  --autocomplete-z: 520;
+  z-index: var(--autocomplete-z) !important;
+  max-height: min(280px, 42vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  margin-top: 4px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow:
+    0 16px 40px rgba(15, 23, 42, 0.14),
+    0 4px 12px rgba(15, 23, 42, 0.08);
+  background: var(--bg-card);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(14, 165, 233, 0.45) transparent;
+}
+
+#diagDrop:not([style*="display: none"]),
+#drugDrop:not([style*="display: none"]) {
+  display: flex !important;
+  flex-direction: column;
+  gap: 5px;
+}
+
+#diagDrop .autocomplete-item,
+#drugDrop .autocomplete-item,
+.autocomplete-dropdown .autocomplete-item {
+  padding: 11px 14px;
+  margin: 0;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  line-height: 1.35;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+
+#diagDrop .autocomplete-item:hover,
+#drugDrop .autocomplete-item:hover,
+.autocomplete-dropdown .autocomplete-item:hover,
+#diagDrop .autocomplete-item.active,
+#drugDrop .autocomplete-item.active,
+.autocomplete-dropdown .autocomplete-item.active {
+  background: var(--primary-light);
+  border-color: rgba(14, 165, 233, 0.22);
+  color: var(--primary);
+}
+
+#diagDrop .autocomplete-item + .autocomplete-item,
+#drugDrop .autocomplete-item + .autocomplete-item {
+  margin-top: 0;
+}
+
+#diagDrop::-webkit-scrollbar,
+#drugDrop::-webkit-scrollbar {
+  width: 6px;
+}
+
+#diagDrop::-webkit-scrollbar-thumb,
+#drugDrop::-webkit-scrollbar-thumb {
+  background: rgba(14, 165, 233, 0.35);
+  border-radius: 999px;
+}
+
+[data-theme="dark"] #diagDrop,
+[data-theme="dark"] #drugDrop {
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(148, 163, 184, 0.08);
+}
+
+/* --- 2. Sticky consultation save bar --- */
+#consultationForm {
+  padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px));
+}
+
+.cs-right {
+  padding-bottom: 4px;
+}
+
+.cs-submit-bar-sticky {
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+  box-shadow:
+    0 -10px 28px rgba(15, 23, 42, 0.1),
+    0 -2px 8px rgba(15, 23, 42, 0.06),
+    var(--shadow-card);
+}
+
+[data-theme="dark"] .cs-submit-bar-sticky {
+  box-shadow:
+    0 -12px 32px rgba(0, 0, 0, 0.42),
+    0 -1px 0 rgba(148, 163, 184, 0.08),
+    var(--shadow-card);
+}
+
+@media (max-width: 900px) {
+  #consultationForm {
+    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .cs-submit-bar-sticky {
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    padding: 14px 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  #consultationForm {
+    padding-bottom: calc(132px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .cs-submit-bar-sticky {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .cs-submit-bar-sticky > div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cs-submit-bar-sticky .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* --- 3. Unified button loading state --- */
+@keyframes ui-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn.loading,
+.auth-btn.loading {
+  pointer-events: none !important;
+  opacity: 0.78 !important;
+  cursor: not-allowed !important;
+}
+
+.btn.loading {
+  gap: 8px;
+}
+
+.auth-btn.loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: none !important;
+}
+
+.btn.loading::after,
+.auth-btn.loading::after {
+  content: "" !important;
+  position: static !important;
+  inset: auto !important;
+  display: inline-block !important;
+  flex-shrink: 0;
+  width: 14px !important;
+  height: 14px !important;
+  margin-left: 8px;
+  vertical-align: middle;
+  border-radius: 50% !important;
+  border: 2px solid rgba(255, 255, 255, 0.35) !important;
+  border-top-color: rgba(255, 255, 255, 0.95) !important;
+  background: transparent !important;
+  animation: ui-btn-spin 0.65s linear infinite !important;
+}
+
+.btn-secondary.loading::after,
+.btn-ghost.loading::after {
+  border-color: rgba(100, 116, 139, 0.35) !important;
+  border-top-color: var(--primary) !important;
+}
+
+.btn.loading:hover::after {
+  background: transparent !important;
+}
+
+.cs-submit-btn.loading .cs-save-icon {
+  opacity: 0.5;
+}
+
+/* --- 4. Toast notifications (mobile + hierarchy) --- */
+.toast-container {
+  pointer-events: none;
+}
+
+.toast-container .toast {
+  pointer-events: auto;
+}
+
+.toast {
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  line-height: 1.45;
+}
+
+.toast > span:first-child {
+  flex-shrink: 0;
+  font-size: 17px;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+.toast > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+  padding-right: 4px;
+}
+
+.toast > button[type="button"] {
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 1px;
+}
+
+.toast-progress {
+  height: 3px;
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .toast-container {
+    left: 12px;
+    right: 12px;
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    align-items: stretch;
+  }
+
+  body:has(#appConsultation:not(.hidden)) .toast-container {
+    bottom: max(96px, calc(16px + env(safe-area-inset-bottom, 0px)));
+  }
+
+  .toast {
+    min-width: 0 !important;
+    max-width: none !important;
+    width: 100%;
+    border-radius: var(--radius-sm);
+    animation: toast-in-mobile 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  @keyframes toast-in-mobile {
+    from {
+      transform: translateY(110%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes toast-out {
+    from {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateY(110%);
+      opacity: 0;
+    }
+  }
+}
+
+/* ============================================================
+   Phase 3 — Final polish (UI / UX / CSS only)
+   ============================================================ */
+
+/* --- Design tokens (finalized) --- */
+:root {
+  --surface-base: var(--bg);
+  --surface-card: var(--bg-card);
+  --surface-raised: #ffffff;
+  --surface-overlay: rgba(15, 23, 42, 0.45);
+  --border-default: var(--border);
+  --border-muted: var(--border-subtle);
+  --text-primary: var(--text);
+  --text-secondary: var(--text-muted);
+  --text-heading: var(--text);
+  --shadow-level-1: var(--shadow-card);
+  --shadow-level-2: var(--shadow);
+  --shadow-level-3: var(--shadow-lg);
+  --focus-ring: 2px solid var(--primary);
+  --focus-offset: 2px;
+  --motion-fast: 0.15s ease;
+  --motion-base: 0.2s ease;
+  --touch-min: 44px;
+  --type-section: 15px;
+  --type-subsection: 13px;
+  --type-label: 11px;
+}
+
+[data-theme="dark"] {
+  --surface-raised: #162234;
+  --surface-overlay: rgba(2, 8, 20, 0.72);
+  --shadow-level-1: 0 1px 3px rgba(0, 0, 0, 0.25), 0 4px 18px rgba(0, 0, 0, 0.22);
+  --shadow-level-2: 0 2px 16px rgba(0, 0, 0, 0.35);
+  --shadow-level-3: 0 10px 36px rgba(0, 0, 0, 0.45);
+}
+
+/* --- 1. Focus system (:focus-visible) --- */
+#mainApp :focus {
+  outline: none;
+}
+
+#mainApp button:focus-visible,
+#mainApp .btn:focus-visible,
+#mainApp .auth-btn:focus-visible,
+#mainApp input:focus-visible,
+#mainApp select:focus-visible,
+#mainApp textarea:focus-visible,
+#mainApp .form-input:focus-visible,
+#mainApp .modal-input:focus-visible,
+#mainApp .nav-item:focus-visible,
+#mainApp .calendar-cell:focus-visible,
+#mainApp .autocomplete-item:focus-visible,
+#mainApp .stat-card:focus-visible,
+#mainApp .info-card:focus-visible,
+#mainApp .clinic-card:focus-visible,
+#mainApp .table-card:focus-visible,
+#mainApp .card:focus-visible,
+#mainApp .cs-panel-header:focus-visible,
+#mainApp .cs-med-remove:focus-visible,
+#mainApp .cal-nav-btn:focus-visible,
+#mainApp .appt-status-btn:focus-visible,
+#mainApp .tag .remove:focus-visible,
+#mainApp .toast > button:focus-visible,
+#mainApp .password-toggle-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+#mainApp .nav-item:focus-visible,
+#mainApp .calendar-cell:focus-visible,
+#mainApp .btn:focus-visible,
+#mainApp button.btn:focus-visible {
+  border-radius: inherit;
+}
+
+#mainApp .calendar-cell:focus-visible {
+  border-radius: 8px;
+}
+
+#loginPage :focus,
+#signupPage :focus {
+  outline: none;
+}
+
+#loginPage button:focus-visible,
+#signupPage button:focus-visible,
+#loginPage input:focus-visible,
+#signupPage input:focus-visible,
+#loginPage .auth-btn:focus-visible,
+#signupPage .auth-btn:focus-visible,
+#loginPage .tilt-card:focus-visible,
+#signupPage .tilt-card:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+/* --- 2. Calm clinical motion (work surfaces) --- */
+#mainApp *,
+#mainApp *::before,
+#mainApp *::after {
+  scroll-behavior: smooth;
+}
+
+#mainApp .nav-item {
+  transition:
+    background var(--motion-base),
+    color var(--motion-base) !important;
+}
+
+#mainApp .nav-item:hover,
+#mainApp .nav-item.active {
+  transform: none !important;
+}
+
+#mainApp .stat-card {
+  transform-style: flat !important;
+  perspective: none !important;
+  transition:
+    transform var(--motion-base),
+    box-shadow var(--motion-base),
+    border-color var(--motion-base) !important;
+}
+
+#mainApp .stat-card::after {
+  display: none !important;
+}
+
+#mainApp .stat-card:hover {
+  transform: translateY(-2px) !important;
+}
+
+#mainApp .calendar-cell {
+  transition:
+    background var(--motion-fast),
+    color var(--motion-fast),
+    box-shadow var(--motion-fast) !important;
+}
+
+#mainApp .calendar-cell:hover,
+#mainApp .calendar-cell.today:hover {
+  transform: none !important;
+}
+
+#mainApp .chart-card,
+#mainApp .welcome-banner,
+#mainApp .qa-btn,
+#mainApp .card,
+#mainApp .info-card,
+#mainApp .table-card {
+  animation: none !important;
+}
+
+#mainApp .toast {
+  animation-duration: 0.22s !important;
+  animation-timing-function: ease !important;
+}
+
+@media (max-width: 768px) {
+  #mainApp .toast {
+    animation: toast-in-mobile-calm 0.22s ease both !important;
+  }
+
+  @keyframes toast-in-mobile-calm {
+    from {
+      transform: translateY(12px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+#mainApp .glow-border {
+  animation: none !important;
+}
+
+#mainApp .badge-pending,
+#mainApp .cal-today-badge {
+  animation: none !important;
+}
+
+/* --- 3. Dark mode audit --- */
+[data-theme="dark"] #mainApp .modal-overlay {
+  background: var(--surface-overlay);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+[data-theme="dark"] #mainApp .modal {
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-level-3);
+}
+
+[data-theme="dark"] #mainApp .modal-header,
+[data-theme="dark"] #mainApp .modal-footer {
+  background: var(--surface-card);
+  border-color: var(--border-muted);
+}
+
+[data-theme="dark"] #mainApp .table-card {
+  background: var(--surface-card);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-level-1);
+}
+
+[data-theme="dark"] #mainApp .table-card thead th {
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-default);
+}
+
+[data-theme="dark"] #mainApp .data-table tbody tr:hover {
+  background: rgba(14, 165, 233, 0.1) !important;
+}
+
+[data-theme="dark"] #diagDrop,
+[data-theme="dark"] #drugDrop,
+[data-theme="dark"] #mainApp .autocomplete-dropdown {
+  background: var(--surface-card) !important;
+  border-color: var(--border-default) !important;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-level-2);
+}
+
+[data-theme="dark"] #mainApp .autocomplete-item:hover,
+[data-theme="dark"] #mainApp .autocomplete-item.active {
+  background: rgba(14, 165, 233, 0.14) !important;
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] #mainApp .toast {
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-level-2);
+}
+
+[data-theme="dark"] #mainApp .empty-state,
+[data-theme="dark"] #mainApp .cs-empty-state {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] #mainApp .empty-state h3,
+[data-theme="dark"] #mainApp .cs-empty-state p {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] #mainApp .cs-submit-bar-sticky {
+  background: rgba(11, 17, 32, 0.94);
+  border-top-color: var(--border-default);
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] #mainApp .cs-panel,
+[data-theme="dark"] #mainApp .cs-form-block {
+  background: var(--surface-card);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-level-1);
+}
+
+[data-theme="dark"] #mainApp .search-card,
+[data-theme="dark"] #mainApp .cal-card,
+[data-theme="dark"] #mainApp .card {
+  background: var(--surface-card);
+  border-color: var(--border-default);
+}
+
+[data-theme="dark"] #patientDetailsContent .patient-detail-hero p,
+[data-theme="dark"] #patientDetailsContent .patient-detail-hero [style*="color:#94a3b8"] {
+  color: var(--text-secondary) !important;
+}
+
+/* --- 4. Mobile touch targets --- */
+@media (max-width: 768px) {
+  #mainApp .sidebar .nav-item {
+    min-height: var(--touch-min);
+    padding: 12px 16px;
+  }
+
+  #mainApp .cal-nav-btn {
+    min-width: var(--touch-min);
+    min-height: var(--touch-min);
+    padding: 10px 14px;
+  }
+
+  #mainApp .autocomplete-item,
+  #diagDrop .autocomplete-item,
+  #drugDrop .autocomplete-item {
+    min-height: var(--touch-min);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  #mainApp .cs-med-remove,
+  #mainApp .tag .remove,
+  #mainApp .toast > button[type="button"] {
+    min-width: var(--touch-min);
+    min-height: var(--touch-min);
+    padding: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #mainApp .btn-sm,
+  #mainApp .icon-btn {
+    min-height: var(--touch-min);
+    min-width: var(--touch-min);
+    padding: 10px 12px;
+  }
+
+  #mainApp .password-toggle-btn {
+    width: var(--touch-min);
+    height: var(--touch-min);
+    right: 4px;
+  }
+}
+
+/* --- 5. Sidebar responsive polish --- */
+@media (max-width: 768px) {
+  #mainApp .app-layout:has(.sidebar.open)::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    background: rgba(2, 8, 20, 0.52);
+    backdrop-filter: blur(12px) saturate(1.2);
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    opacity: 1;
+    pointer-events: none;
+    transition: opacity 0.28s ease;
+  }
+
+  [data-theme="dark"] #mainApp .app-layout:has(.sidebar.open)::before {
+    background: rgba(0, 0, 0, 0.62);
+  }
+
+  #mainApp .sidebar {
+    z-index: 101;
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow:
+      12px 0 40px rgba(0, 0, 0, 0.28),
+      0 0 0 1px rgba(255, 255, 255, 0.04);
+  }
+
+  #mainApp .sidebar.open {
+    transform: translateX(0);
+  }
+
+  #mainApp .sidebar .nav-item.active {
+    background: rgba(14, 165, 233, 0.22) !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(14, 165, 233, 0.35),
+      0 4px 16px rgba(14, 165, 233, 0.12);
+  }
+}
+
+/* --- 6. Information hierarchy (patients + consultation) --- */
+#mainApp .page-header-row {
+  margin-bottom: var(--space-lg);
+  gap: var(--space-md);
+}
+
+#mainApp .page-header-row h2,
+#mainApp #topbarTitle {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+#patientDetailsContent .patient-detail-hero {
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--border-muted);
+}
+
+#patientDetailsContent .info-grid {
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+#patientDetailsContent .info-card {
+  padding: var(--space-lg);
+}
+
+#patientDetailsContent .info-card-title {
+  font-family: "Fraunces", serif;
+  font-size: var(--type-subsection);
+  font-weight: 700;
+  color: var(--text-heading);
+  margin-bottom: var(--space-md);
+  letter-spacing: 0.01em;
+}
+
+#patientDetailsContent .info-label {
+  font-size: var(--type-label);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+#patientDetailsContent .info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+#patientDetailsContent > .card {
+  margin-bottom: var(--space-xl) !important;
+  padding: var(--space-lg);
+}
+
+#patientDetailsContent > .card > div:first-child {
+  font-family: "Fraunces", serif !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  margin-bottom: var(--space-md) !important;
+  color: var(--text-heading);
+}
+
+#mainApp .consultation-layout {
+  gap: var(--space-lg);
+}
+
+#mainApp .cs-panel {
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+#mainApp .cs-panel + .cs-panel,
+#mainApp .cs-form-block + .cs-form-block,
+#mainApp .cs-panel + .cs-form-block {
+  margin-top: var(--space-lg);
+}
+
+#mainApp .cs-panel-header {
+  font-size: var(--type-section);
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+}
+
+#mainApp .cs-block-title {
+  font-size: var(--type-section);
+}
+
+#mainApp .cs-block-sub {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+#mainApp .cs-form-block {
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+#mainApp .form-label,
+#mainApp .cs-med-lbl {
+  font-size: var(--type-label);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+#mainApp .cs-vitals {
+  gap: var(--space-md);
 }

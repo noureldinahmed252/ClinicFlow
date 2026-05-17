@@ -171,8 +171,23 @@ function initScrollProgress() {
       bar.style.width = Math.min(pct, 100) + "%";
     });
 }
+function isWorkSurfaceActive() {
+  const main = document.getElementById("mainApp");
+  return main && !main.classList.contains("hidden");
+}
+
+function isAuthSurfaceVisible() {
+  const login = document.getElementById("loginPage");
+  const signup = document.getElementById("signupPage");
+  return (
+    (login && !login.classList.contains("hidden")) ||
+    (signup && !signup.classList.contains("hidden"))
+  );
+}
+
 // 4. STAT CARD RIPPLE EFFECT
 function addRipples() {
+  if (isWorkSurfaceActive()) return;
   document.querySelectorAll(".stat-card").forEach((card) => {
     card.addEventListener("click", function (e) {
       const r = document.createElement("div");
@@ -213,6 +228,7 @@ function resetPageScroll() {
 // 🚀 GSAP ANIMATIONS
 // ============================================================
 function gsapRevealPage() {
+  if (isWorkSurfaceActive()) return;
   if (typeof gsap === "undefined") return;
   const reveal = (selector, options) => {
     if (document.querySelector(selector)) gsap.from(selector, options);
@@ -253,6 +269,7 @@ function gsapRevealPage() {
 }
 
 function gsapRevealCards(selector) {
+  if (isWorkSurfaceActive()) return;
   if (typeof gsap === "undefined") return;
   if (document.querySelector(selector)) {
     gsap.from(selector, {
@@ -289,7 +306,11 @@ function animateCountUp(elId, target) {
 // 🎯 3D TILT
 // ============================================================
 function initTilt() {
-  document.querySelectorAll(".tilt-card").forEach((card) => {
+  document
+    .querySelectorAll("#loginPage .tilt-card, #signupPage .tilt-card")
+    .forEach((card) => {
+    if (card.dataset.tiltBound === "1") return;
+    card.dataset.tiltBound = "1";
     card.addEventListener("mousemove", (e) => {
       const r = card.getBoundingClientRect();
       const x = (e.clientX - r.left - r.width / 2) / r.width;
@@ -305,6 +326,8 @@ function initTilt() {
 // ✨ SPARKLE CURSOR TRAIL
 // ============================================================
 function initSparkle() {
+  if (window._sparkleBound) return;
+  window._sparkleBound = true;
   const colors = [
     "#0ea5e9",
     "#8b5cf6",
@@ -315,6 +338,7 @@ function initSparkle() {
   ];
   let last = 0;
   document.addEventListener("mousemove", (e) => {
+    if (!isAuthSurfaceVisible()) return;
     const now = Date.now();
     if (now - last < 40) return; // 25fps max
     last = now;
@@ -382,4 +406,28 @@ window.addEventListener("unauthorized", () => {
   if (typeof logout === "function") {
     setTimeout(logout, 1000);
   }
+});
+
+// ============================================================
+// PASSWORD VISIBILITY TOGGLE (UI only)
+// ============================================================
+function initPasswordToggles() {
+  document.querySelectorAll(".password-toggle-btn").forEach((btn) => {
+    if (btn.dataset.bound === "1") return;
+    btn.dataset.bound = "1";
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.dataset.target);
+      if (!input) return;
+      const show = input.type === "password";
+      input.type = show ? "text" : "password";
+      btn.classList.toggle("is-visible", show);
+      btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initPasswordToggles();
+  initSparkle();
+  initTilt();
 });
