@@ -30,10 +30,10 @@ const SafeDB = {
       const doctorId = getCurrentDoctorId();
       if (!doctorId) {
         console.warn(
-          `🔐 Blocked: Cannot access ${key} without active doctor session`
+          `🔐 Blocked: Cannot access ${key} without active doctor session`,
         );
         console.warn(
-          `SafeDB blocked access to "${key}" because doctorId is missing`
+          `SafeDB blocked access to "${key}" because doctorId is missing`,
         );
         return def;
       }
@@ -435,11 +435,7 @@ function normalizePatient(patient = {}) {
       nested.notes,
       nested.patientNotes,
     ),
-    doctorId: firstValue(
-      patient.doctorId,
-      nested.doctorId,
-      ""
-    ),
+    doctorId: firstValue(patient.doctorId, nested.doctorId, ""),
   };
 }
 
@@ -548,11 +544,7 @@ function normalizeAppointment(appt = {}) {
     ),
     price: toNumber(appt.price ?? appt.fee ?? clinic?.doctorPrice, 0),
     notes: firstValue(appt.notes, appt.appointmentNotes),
-    doctorId: firstValue(
-      appt.doctorId,
-      nestedPatient.doctorId,
-      ""
-    ),
+    doctorId: firstValue(appt.doctorId, nestedPatient.doctorId, ""),
   };
 }
 
@@ -688,9 +680,7 @@ function createPatientFromApiAppointment(appt = {}, index = 0) {
 function storeApiAppointments(apiAppointments = []) {
   const currentDoctorId = getCurrentDoctorId();
   if (!currentDoctorId) {
-    console.error(
-      "storeApiAppointments aborted: missing currentDoctorId"
-    );
+    console.error("storeApiAppointments aborted: missing currentDoctorId");
     return;
   }
 
