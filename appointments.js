@@ -10,7 +10,8 @@ function goToday() {
 }
 
 function updateCalStats() {
-  const appts = DB.get("appointments").map(normalizeAppointment);
+  const currentDoctorId = getCurrentDoctorId();
+  const appts = SafeDB.get("appointments").map(normalizeAppointment);
   const monthStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}`;
   const monthAppts = appts.filter((a) => a.date.startsWith(monthStr));
   const setEl = (id, val) => {
@@ -32,12 +33,13 @@ function updateCalStats() {
 }
 
 function renderCalendar() {
+  const currentDoctorId = getCurrentDoctorId();
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const grid = document.getElementById("calGrid");
   const today = new Date();
   const firstDay = new Date(calYear, calMonth, 1);
   const lastDay = new Date(calYear, calMonth + 1, 0);
-  const appts = DB.get("appointments").map(normalizeAppointment);
+  const appts = SafeDB.get("appointments").map(normalizeAppointment);
 
   // 📈 PRE-INDEX APPOINTMENTS BY DATE (O(n))
   const apptsByDate = {};
@@ -77,16 +79,14 @@ function renderCalendar() {
     if (dayAppts.length === 1) {
       dotsHtml = '<div class="dot"></div>';
     } else if (dayAppts.length > 1) {
-      const colors = statuses
-        .slice(0, 3)
-        .map(
-          (s) =>
-            ({
-              pending: "var(--warning)",
-              completed: "var(--purple)",
-              cancelled: "var(--danger)",
-            })[s] || "var(--primary)",
-        );
+      const colors = statuses.slice(0, 3).map(
+        (s) =>
+          ({
+            pending: "var(--warning)",
+            completed: "var(--purple)",
+            cancelled: "var(--danger)",
+          })[s] || "var(--primary)",
+      );
       dotsHtml = `<div class="dot-multi">${colors.map((c) => `<div class="dot-mini" style="background:${c};"></div>`).join("")}</div>`;
     }
 
@@ -120,8 +120,9 @@ function changeMonth(dir) {
 }
 
 function renderCalAppts() {
-  const appts = DB.get("appointments").map(normalizeAppointment);
-  const patients = DB.get("patients").map(normalizePatient);
+  const currentDoctorId = getCurrentDoctorId();
+  const appts = SafeDB.get("appointments").map(normalizeAppointment);
+  const patients = SafeDB.get("patients").map(normalizePatient);
   const filtered = calSelectedDate
     ? appts.filter((a) => a.date === calSelectedDate)
     : appts.filter((a) =>
@@ -184,35 +185,46 @@ function renderCalAppts() {
         "#ef4444,#dc2626",
       ];
       const grad = gradients[idx % gradients.length];
+      const apptIdArg = escapeJsString(a.id);
+      const safeInitials = escapeHtml(getInitials(p.name));
+      const safePatientName = escapeHtml(valueOrDash(p.name));
+      const safeAge = escapeHtml(valueOrDash(p.age));
+      const safeGender = escapeHtml(valueOrDash(p.gender));
+      const safeClinicName = escapeHtml(valueOrDash(a.clinicName));
+      const safeStatus = escapeHtml(a.status);
+      const safeDatePrefix = !calSelectedDate
+        ? `${escapeHtml(formatDate(a.date))}  ·  `
+        : "";
+      const safeNotes = escapeHtml(a.notes);
 
       return `<div class="cal-appt-card" style="animation-delay:${idx * 0.05}s;border-left-color:${sc.border};" data-status="${statusKey(a.status)}">
       <!-- Time + Avatar row -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
         <div class="cal-appt-time">${formatTime(a.time)}</div>
-        <div class="cal-appt-avatar" style="background:linear-gradient(135deg,${grad});">${getInitials(p.name)}</div>
+        <div class="cal-appt-avatar" style="background:linear-gradient(135deg,${grad});">${safeInitials}</div>
         <div style="flex:1;min-width:0;">
-          <div class="cal-appt-name">${valueOrDash(p.name)}</div>
-          <div class="cal-appt-date">${!calSelectedDate ? formatDate(a.date) + "  ·  " : ""}${valueOrDash(p.age)}y · ${valueOrDash(p.gender)} · ${valueOrDash(a.clinicName)}</div>
+          <div class="cal-appt-name">${safePatientName}</div>
+          <div class="cal-appt-date">${safeDatePrefix}${safeAge}y · ${safeGender} · ${safeClinicName}</div>
         </div>
-        <span class="cal-appt-badge" style="background:${sc.bg};color:${sc.text};">${a.status}</span>
+        <span class="cal-appt-badge" style="background:${sc.bg};color:${sc.text};">${safeStatus}</span>
       </div>
       <!-- Notes -->
-      ${a.notes ? `<div class="cal-appt-notes">${a.notes}</div>` : ""}
+      ${a.notes ? `<div class="cal-appt-notes">${safeNotes}</div>` : ""}
       <!-- Actions -->
       <div class="cal-appt-actions">
         ${
           a.status === "Pending"
             ? `
-          <button class="cal-action-btn cal-action-consult" onclick="startConsultation('${a.id}')" data-tip="Start consultation">
+          <button class="cal-action-btn cal-action-consult" onclick="startConsultation('${apptIdArg}')" data-tip="Start consultation">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             Consult
           </button>`
             : `<span class="cal-done-tag">${a.status === "Completed" ? "✓ Completed" : "Unavailable"}</span>`
         }
-        <button class="cal-action-btn" onclick="editAppt('${a.id}')" data-tip="Edit">
+        <button class="cal-action-btn" onclick="editAppt('${apptIdArg}')" data-tip="Edit">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
-        <button class="cal-action-btn cal-action-del" onclick="deleteAppt('${a.id}')" data-tip="Delete">
+        <button class="cal-action-btn cal-action-del" onclick="deleteAppt('${apptIdArg}')" data-tip="Delete">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
         </button>
       </div>
@@ -251,7 +263,7 @@ function populateClinicSelect(selId, selectedId = "") {
     clinics
       .map(
         (c) =>
-          `<option value="${c.clinicId}" ${String(c.clinicId) === String(selectedId) ? "selected" : ""}>${valueOrDash(c.clinicName)}</option>`,
+          `<option value="${escapeHtml(c.clinicId)}" ${String(c.clinicId) === String(selectedId) ? "selected" : ""}>${escapeHtml(valueOrDash(c.clinicName))}</option>`,
       )
       .join("");
 }
@@ -292,9 +304,17 @@ function openNewAppointment() {
 }
 
 function editAppt(id) {
-  const appts = DB.get("appointments").map(normalizeAppointment);
-  const a = appts.find((x) => x.id === id);
-  if (!a) return;
+  const currentDoctorId = getCurrentDoctorId();
+  if (!currentDoctorId) {
+    toast("User not logged in.", "error");
+    return;
+  }
+  const appts = SafeDB.get("appointments").map(normalizeAppointment);
+  const a = appts.find((x) => x.id === id && x.doctorId === currentDoctorId);
+  if (!a) {
+    toast("Appointment not found or access denied.", "warning");
+    return;
+  }
   document.getElementById("apptModalTitle").textContent = "Edit Appointment";
   document.getElementById("apptId").value = a.id;
   populatePatientSelect("apptPatient", a.patientId);
@@ -331,14 +351,16 @@ function hasAppointmentConflict(appt, existingId = "") {
     return false; // Invalid time, can't check conflict
   }
 
-  const conflicts = DB.get("appointments")
+  const currentDoctorId = getCurrentDoctorId();
+  const conflicts = SafeDB.get("appointments")
     .map(normalizeAppointment)
     .filter(
       (existing) =>
         existing.id !== existingId &&
         existing.status !== "Cancelled" &&
         existing.clinicId === appt.clinicId &&
-        existing.date === appt.date,
+        existing.date === appt.date &&
+        existing.doctorId === currentDoctorId,
     )
     .filter((existing) => appointmentsOverlap(existing, appt));
 
@@ -348,16 +370,21 @@ function hasAppointmentConflict(appt, existingId = "") {
 function saveAppointment(e) {
   e.preventDefault();
   const id = document.getElementById("apptId").value;
+  const currentDoctorId = getCurrentDoctorId();
+  if (!currentDoctorId) {
+    toast("User not logged in.", "error");
+    return;
+  }
   const existing = id
-    ? DB.get("appointments")
+    ? SafeDB.get("appointments")
         .map(normalizeAppointment)
-        .find((a) => a.id === id)
+        .find((a) => a.id === id && a.doctorId === currentDoctorId)
     : null;
   const patientId = document.getElementById("apptPatient").value;
   const clinicId = toClinicId(document.getElementById("apptClinic").value);
-  const patient = DB.get("patients")
+  const patient = SafeDB.get("patients")
     .map(normalizePatient)
-    .find((p) => p.id === patientId);
+    .find((p) => p.id === patientId && p.doctorId === currentDoctorId);
   const clinic = DB.get("clinics")
     .map((c, index) => normalizeClinic(c, index))
     .find((c) => c.clinicId === clinicId);
@@ -371,6 +398,7 @@ function saveAppointment(e) {
 
   const appt = normalizeAppointment({
     id: id || nextPrefixedId("appointments", "A"),
+    doctorId: currentDoctorId,
     patientId,
     clinicId,
     patientName: patient?.name || "",
@@ -391,14 +419,16 @@ function saveAppointment(e) {
     return;
   }
 
-  const appts = DB.get("appointments").map(normalizeAppointment);
+  const appts = SafeDB.get("appointments").map(normalizeAppointment);
   if (id) {
-    const i = appts.findIndex((x) => x.id === id);
+    const i = appts.findIndex(
+      (x) => x.id === id && x.doctorId === currentDoctorId,
+    );
     if (i >= 0) appts[i] = appt;
   } else {
     appts.push(appt);
   }
-  DB.set("appointments", appts);
+  SafeDB.set("appointments", appts);
   syncPatientLastVisit(appt.patientId);
   if (existing?.patientId && existing.patientId !== appt.patientId)
     syncPatientLastVisit(existing.patientId);
@@ -411,13 +441,23 @@ function saveAppointment(e) {
 
 function deleteAppt(id) {
   if (!confirm("Delete this appointment?")) return;
-  const deleted = DB.get("appointments")
+  const currentDoctorId = getCurrentDoctorId();
+  if (!currentDoctorId) {
+    toast("User not logged in.", "error");
+    return;
+  }
+  const deleted = SafeDB.get("appointments")
     .map(normalizeAppointment)
     .find((x) => x.id === id);
-  const appts = DB.get("appointments")
+  // 🔐 Only delete if appointment belongs to current doctor
+  if (!deleted || deleted.doctorId !== currentDoctorId) {
+    toast("Cannot delete: appointment not found or access denied.", "warning");
+    return;
+  }
+  const appts = SafeDB.get("appointments")
     .map(normalizeAppointment)
     .filter((x) => x.id !== id);
-  DB.set("appointments", appts);
+  SafeDB.set("appointments", appts);
   if (deleted?.patientId) syncPatientLastVisit(deleted.patientId);
   toast("Appointment deleted", "info");
   updatePendingBadge();
@@ -426,14 +466,15 @@ function deleteAppt(id) {
 }
 
 function populatePatientSelect(selId, selectedId = "") {
-  const patients = DB.get("patients").map(normalizePatient);
+  const currentDoctorId = getCurrentDoctorId();
+  const patients = SafeDB.get("patients").map(normalizePatient);
   const sel = document.getElementById(selId);
   sel.innerHTML =
     '<option value="">-- Select Patient --</option>' +
     patients
       .map(
         (p) =>
-          `<option value="${p.id}" ${p.id === selectedId ? "selected" : ""}>${valueOrDash(p.name)} (${valueOrDash(p.age)}y)</option>`,
+          `<option value="${escapeHtml(p.id)}" ${p.id === selectedId ? "selected" : ""}>${escapeHtml(valueOrDash(p.name))} (${escapeHtml(valueOrDash(p.age))}y)</option>`,
       )
       .join("");
 }

@@ -17,6 +17,86 @@ const DB = {
   },
 };
 
+// 🔐 SECURE DB WRAPPER - Multi-tenant safety layer
+// All access to patient/appointment/consultation data goes through this
+// to ensure automatic filtering by doctorId and prevent data leakage
+const SafeDB = {
+  // Tenant-scoped collections that require doctorId filtering
+  _tenantScoped: ["patients", "appointments", "consultations"],
+
+  get(key, def = []) {
+    // SAFETY GUARD: Check for active session on tenant data access
+    if (this._tenantScoped.includes(key)) {
+      const doctorId = getCurrentDoctorId();
+      if (!doctorId) {
+        console.warn(
+          `🔐 Blocked: Cannot access ${key} without active doctor session`
+        );
+        console.warn(
+          `SafeDB blocked access to "${key}" because doctorId is missing`
+        );
+        return def;
+      }
+
+      // Get raw data from DB
+      const rawData = DB.get(key, def);
+      if (!Array.isArray(rawData)) return rawData;
+
+      // AUTO-FILTER by doctorId: Only return records belonging to current doctor
+      // Records without doctorId are treated as legacy data and safely ignored
+      const filtered = rawData.filter((record) => {
+        // Skip records without doctorId (backward compatibility - don't expose)
+        if (!record.doctorId) return false;
+        // Only return if doctorId matches current user
+        return record.doctorId === doctorId;
+      });
+
+      return filtered;
+    }
+
+    // Non-tenant data: pass through without filtering
+    return DB.get(key, def);
+  },
+
+  set(key, val) {
+    // Write protection: automatically inject doctorId into tenant-scoped data
+    if (this._tenantScoped.includes(key) && Array.isArray(val)) {
+      const doctorId = getCurrentDoctorId();
+      if (!doctorId) {
+        console.error(
+          `🔐 BLOCKED WRITE: Cannot save ${key} without active doctor session`,
+        );
+        throw new Error(`Unauthorized: No active doctor session`);
+      }
+
+      // 🔐 CRITICAL FIX: Merge records to prevent data loss
+      // Load all existing records from DB
+      const allRecords = DB.get(key, []);
+
+      // Keep records belonging to OTHER doctors (preserve their data)
+      const otherDoctorsRecords = allRecords.filter(
+        (record) => record.doctorId && record.doctorId !== doctorId,
+      );
+
+      // Inject doctorId into incoming records
+      const currentDoctorRecords = val.map((record) => ({
+        ...record,
+        doctorId: record.doctorId || doctorId,
+      }));
+
+      // Merge: preserve other doctors' data + save current doctor's data
+      val = [...otherDoctorsRecords, ...currentDoctorRecords];
+    }
+
+    // Write through to DB
+    DB.set(key, val);
+  },
+
+  genId() {
+    return DB.genId();
+  },
+};
+
 function valueOrDash(value) {
   return value === undefined || value === null || value === "" ? "-" : value;
 }
@@ -72,6 +152,11 @@ function extractDoctorId(response) {
     localStorage.getItem("doctorId") ??
     null
   );
+}
+
+// 🔐 DATA ISOLATION FIX: Get current doctor ID for data scoping
+function getCurrentDoctorId() {
+  return localStorage.getItem("doctorId") || null;
 }
 
 function normalizeApiArray(response) {
@@ -350,6 +435,11 @@ function normalizePatient(patient = {}) {
       nested.notes,
       nested.patientNotes,
     ),
+    doctorId: firstValue(
+      patient.doctorId,
+      nested.doctorId,
+      ""
+    ),
   };
 }
 
@@ -458,6 +548,11 @@ function normalizeAppointment(appt = {}) {
     ),
     price: toNumber(appt.price ?? appt.fee ?? clinic?.doctorPrice, 0),
     notes: firstValue(appt.notes, appt.appointmentNotes),
+    doctorId: firstValue(
+      appt.doctorId,
+      nestedPatient.doctorId,
+      ""
+    ),
   };
 }
 
@@ -591,7 +686,15 @@ function createPatientFromApiAppointment(appt = {}, index = 0) {
 }
 
 function storeApiAppointments(apiAppointments = []) {
-  const patients = DB.get("patients").map(normalizePatient);
+  const currentDoctorId = getCurrentDoctorId();
+  if (!currentDoctorId) {
+    console.error(
+      "storeApiAppointments aborted: missing currentDoctorId"
+    );
+    return;
+  }
+
+  const patients = SafeDB.get("patients").map(normalizePatient);
   const appts = apiAppointments
     .map((appt, index) => {
       const apiPatient = createPatientFromApiAppointment(appt, index);
@@ -601,23 +704,28 @@ function storeApiAppointments(apiAppointments = []) {
           patients[patientIndex] = normalizePatient({
             ...patients[patientIndex],
             ...apiPatient,
+            doctorId: currentDoctorId,
             visits: patients[patientIndex].visits || [],
             lastVisit: apiPatient.lastVisit || patients[patientIndex].lastVisit,
           });
         } else {
-          patients.push(apiPatient);
+          patients.push({
+            ...apiPatient,
+            doctorId: currentDoctorId,
+          });
         }
       }
       return normalizeAppointment({
         ...appt,
+        doctorId: currentDoctorId,
         patientId:
           apiPatient?.id ||
           firstValue(appt.patientId, appt.patient?.patientId, appt.patient?.id),
       });
     })
     .filter((appt) => appt.id);
-  DB.set("patients", patients);
-  DB.set("appointments", appts);
+  SafeDB.set("patients", patients);
+  SafeDB.set("appointments", appts);
 }
 
 async function refreshAppointmentsFromApi() {
@@ -666,8 +774,9 @@ async function syncApiAfterAuth(authResponse, credentials = {}) {
 }
 
 function latestPatientVisitDate(patientId) {
-  const appts = DB.get("appointments").map(normalizeAppointment);
-  const consultations = DB.get("consultations");
+  const currentDoctorId = getCurrentDoctorId();
+  const appts = SafeDB.get("appointments").map(normalizeAppointment);
+  const consultations = SafeDB.get("consultations");
   const dates = [
     ...appts.filter((a) => a.patientId === patientId).map((a) => a.date),
     ...consultations
@@ -678,15 +787,15 @@ function latestPatientVisitDate(patientId) {
 }
 
 function syncPatientLastVisit(patientId) {
-  const patients = DB.get("patients").map(normalizePatient);
+  const patients = SafeDB.get("patients").map(normalizePatient);
   const idx = patients.findIndex((p) => p.id === patientId);
   if (idx < 0) return;
   patients[idx].lastVisit = latestPatientVisitDate(patientId);
-  DB.set("patients", patients);
+  SafeDB.set("patients", patients);
 }
 
 function addPatientVisit(consult) {
-  const patients = DB.get("patients").map(normalizePatient);
+  const patients = SafeDB.get("patients").map(normalizePatient);
   const idx = patients.findIndex((p) => p.id === consult.patientId);
   if (idx < 0) return;
   const visit = normalizeVisit(consult);
@@ -697,7 +806,7 @@ function addPatientVisit(consult) {
     ),
   ].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   patients[idx].lastVisit = consult.date || patients[idx].lastVisit;
-  DB.set("patients", patients);
+  SafeDB.set("patients", patients);
 }
 
 function migrateStoredData() {
@@ -894,8 +1003,9 @@ function getChartColors() {
 }
 
 function renderCharts() {
-  const appts = DB.get("appointments");
-  const patients = DB.get("patients").map(normalizePatient);
+  const currentDoctorId = getCurrentDoctorId();
+  const appts = SafeDB.get("appointments").map(normalizeAppointment);
+  const patients = SafeDB.get("patients").map(normalizePatient);
   const c = getChartColors();
   const chartDefaults = {
     responsive: true,
@@ -1021,8 +1131,9 @@ function renderCharts() {
 // DASHBOARD
 // ============================================================
 function renderDashboard() {
-  const patients = DB.get("patients").map(normalizePatient);
-  const appts = DB.get("appointments").map(normalizeAppointment);
+  const currentDoctorId = getCurrentDoctorId();
+  const patients = SafeDB.get("patients").map(normalizePatient);
+  const appts = SafeDB.get("appointments").map(normalizeAppointment);
   const today = new Date().toISOString().slice(0, 10);
   const todayAppts = appts.filter((a) => a.date === today);
   const pending = appts.filter((a) => a.status === "Pending");
@@ -1062,26 +1173,33 @@ function renderDashboard() {
     .map((a, idx) => {
       const p = patients.find((x) => x.id === a.patientId);
       if (!p) return "";
+      const apptIdArg = escapeJsString(a.id);
+      const safeInitials = escapeHtml(getInitials(p.name));
+      const safePatientName = escapeHtml(valueOrDash(p.name));
+      const safeAge = escapeHtml(valueOrDash(p.age));
+      const safeGender = escapeHtml(valueOrDash(p.gender));
+      const safeClinicName = escapeHtml(valueOrDash(a.clinicName));
+      const safeNotes = escapeHtml(a.notes || "No notes");
       return `<div class="appointment-item" data-status="${statusKey(a.status)}" style="animation-delay:${idx * 0.06}s;">
       <div class="appt-time">${formatTime(a.time)}</div>
-      <div class="patient-initials" style="background:linear-gradient(135deg,${["#0ea5e9", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444"][idx % 5]},${["#0284c7", "#059669", "#7c3aed", "#d97706", "#dc2626"][idx % 5]});">${getInitials(p.name)}</div>
+      <div class="patient-initials" style="background:linear-gradient(135deg,${["#0ea5e9", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444"][idx % 5]},${["#0284c7", "#059669", "#7c3aed", "#d97706", "#dc2626"][idx % 5]});">${safeInitials}</div>
       <div class="appt-info">
-        <div class="appt-name">${valueOrDash(p.name)}</div>
-        <div class="appt-meta">${valueOrDash(p.age)}y · ${valueOrDash(p.gender)} · ${valueOrDash(a.clinicName)} · ${a.notes || "No notes"}</div>
+        <div class="appt-name">${safePatientName}</div>
+        <div class="appt-meta">${safeAge}y · ${safeGender} · ${safeClinicName} · ${safeNotes}</div>
       </div>
       ${badgeHtml(a.status)}
       <div class="appt-actions">
         ${
           a.status === "Pending"
-            ? `<button class="btn btn-success" onclick="startConsultation('${a.id}')" data-tip="Start consultation" style="padding:7px 12px;font-size:12px;">
+            ? `<button class="btn btn-success" onclick="startConsultation('${apptIdArg}')" data-tip="Start consultation" style="padding:7px 12px;font-size:12px;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           Consult</button>`
             : `<span class="badge ${a.status === "Completed" ? "badge-done" : "badge-cancelled"}">${a.status === "Completed" ? "✓ Completed" : "Unavailable"}</span>`
         }
-        <button class="btn btn-secondary" onclick="editAppt('${a.id}')" data-tip="Edit" style="padding:7px 10px;font-size:12px;">
+        <button class="btn btn-secondary" onclick="editAppt('${apptIdArg}')" data-tip="Edit" style="padding:7px 10px;font-size:12px;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
-        <button class="btn btn-danger" onclick="deleteAppt('${a.id}')" data-tip="Delete" style="padding:7px 10px;font-size:12px;">
+        <button class="btn btn-danger" onclick="deleteAppt('${apptIdArg}')" data-tip="Delete" style="padding:7px 10px;font-size:12px;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
         </button>
       </div>
@@ -1123,7 +1241,8 @@ document.addEventListener("keydown", (e) => {
 
 // 5. PENDING BADGE — update on data change
 function updatePendingBadge() {
-  const appts = DB.get("appointments").map(normalizeAppointment);
+  const currentDoctorId = getCurrentDoctorId();
+  const appts = SafeDB.get("appointments").map(normalizeAppointment);
   const pending = appts.filter((a) => a.status === "Pending").length;
   const badge = document.getElementById("pendingBadge");
   if (!badge) return;

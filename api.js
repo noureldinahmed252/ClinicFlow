@@ -17,8 +17,6 @@ async function apiRequest(endpoint, method = "GET", body = null) {
     // 🔐 Use validated token
     const token = AuthValidator.getValidToken();
 
-    console.log(`📡 ${method} ${endpoint}`);
-
     const response = await fetch(BASE_URL + endpoint, {
       method: method,
       headers: {
@@ -29,13 +27,8 @@ async function apiRequest(endpoint, method = "GET", body = null) {
       body: body ? JSON.stringify(body) : null,
     });
 
-    console.log(
-      `📊 Response Status: ${response.status} ${response.statusText}`,
-    );
-
     // Get response text first
     const responseText = await response.text();
-    console.log(`📄 Response Body:`, responseText);
 
     // Try to parse JSON safely
     let data = {};
@@ -43,7 +36,7 @@ async function apiRequest(endpoint, method = "GET", body = null) {
       try {
         data = JSON.parse(responseText);
       } catch {
-        console.error("❌ Invalid JSON response:", responseText);
+        console.error("❌ Invalid JSON response");
         throw new Error("Server returned invalid response");
       }
     }
@@ -145,20 +138,16 @@ function normalizeApiMedicine(medicine = {}) {
 
 // Login Doctor - Correct endpoint
 async function apiLogin(email, password) {
-  console.log("🔐 Attempting login...");
   const response = await apiRequest("/api/auth/doctor/login", "POST", {
     email: email,
     password: password,
   });
-
-  console.log("✅ Login response:", response);
 
   // Save token if returned - using authToken consistently
   const token = response.token || response.access_token || response.data?.token;
 
   if (token) {
     localStorage.setItem("authToken", token);
-    console.log("🔑 Token saved in authToken:", token.substring(0, 20) + "...");
   } else {
     console.warn("⚠️ No token in login response");
   }
@@ -169,9 +158,6 @@ async function apiLogin(email, password) {
 // Register Doctor - Correct endpoint (multipart/form-data)
 async function apiSignup(signupData) {
   try {
-    console.log("📝 Attempting registration...");
-    console.log("📋 Registration data:", signupData);
-
     // Convert object to FormData (API expects multipart/form-data, not JSON)
     const formData = new FormData();
 
@@ -185,8 +171,6 @@ async function apiSignup(signupData) {
     formData.append("LicenseNumber", signupData.LicenseNumber || "");
     formData.append("NationalNumber", signupData.NationalNumber || 0);
 
-    console.log("📦 FormData prepared for multipart/form-data request");
-
     const response = await fetch(BASE_URL + "/api/auth/doctor/register", {
       method: "POST",
       headers: {
@@ -195,13 +179,8 @@ async function apiSignup(signupData) {
       body: formData,
     });
 
-    console.log(
-      `📊 Response Status: ${response.status} ${response.statusText}`,
-    );
-
     // Get response text first
     const responseText = await response.text();
-    console.log(`📄 Response Body:`, responseText);
 
     // Handle unauthorized
     if (response.status === 401) {
@@ -215,7 +194,7 @@ async function apiSignup(signupData) {
       try {
         data = JSON.parse(responseText);
       } catch {
-        console.error("❌ Invalid JSON response:", responseText);
+        console.error("❌ Invalid JSON response");
         throw new Error("Server returned invalid response");
       }
     }
@@ -247,12 +226,9 @@ async function apiSignup(signupData) {
       throw new Error(errorMessage);
     }
 
-    console.log("✅ Registration successful:", data);
-
     // Save token if returned
     if (data.token) {
       localStorage.setItem("authToken", data.token);
-      console.log("🔑 Token saved to localStorage");
     } else if (data.access_token) {
       localStorage.setItem("authToken", data.access_token);
     } else if (data.data?.token) {
@@ -271,16 +247,6 @@ async function apiSignupWithPhoto(formData) {
   try {
     const token = localStorage.getItem("authToken");
 
-    console.log("🔐 Attempting doctor registration with photo...");
-    console.log("📸 FormData contents:");
-    for (let [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        console.log(`  ${key}: File - ${value.name} (${value.size} bytes)`);
-      } else {
-        console.log(`  ${key}: ${value}`);
-      }
-    }
-
     const response = await fetch(BASE_URL + "/api/auth/doctor/register", {
       method: "POST",
       headers: {
@@ -290,13 +256,9 @@ async function apiSignupWithPhoto(formData) {
       body: formData,
     });
 
-    console.log(
-      `📊 Response Status: ${response.status} ${response.statusText}`,
-    );
 
     // Get response text first
     const responseText = await response.text();
-    console.log(`📄 Response Body:`, responseText);
 
     // Handle unauthorized
     if (response.status === 401) {
@@ -310,7 +272,7 @@ async function apiSignupWithPhoto(formData) {
       try {
         data = JSON.parse(responseText);
       } catch {
-        console.error("❌ Invalid JSON response:", responseText);
+        console.error("❌ Invalid JSON response");
         throw new Error("Server returned invalid response");
       }
     }
@@ -359,12 +321,10 @@ async function apiSignupWithPhoto(formData) {
       throw new Error(errorMessage);
     }
 
-    console.log("✅ Registration with photo successful:", data);
 
     // Save token if returned
     if (data.token) {
       localStorage.setItem("authToken", data.token);
-      console.log("🔑 Token saved to localStorage");
     } else if (data.access_token) {
       localStorage.setItem("authToken", data.access_token);
     } else if (data.data?.token) {
@@ -381,10 +341,8 @@ async function apiSignupWithPhoto(formData) {
 // Get Doctor Profile Data
 async function getProfileData(doctorId) {
   try {
-    console.log(`📋 Fetching doctor profile for ID: ${doctorId}`);
     const response = await apiRequest(`/api/DoctorProfile/${doctorId}`, "GET");
 
-    console.log("✅ Profile data retrieved:", response);
     return response;
   } catch (error) {
     console.error("🔴 Profile fetch error:", error);
@@ -413,22 +371,17 @@ async function apiUpdateProfile(doctorId, profileData) {
       "PUT",
       payload,
     );
-    console.log("✅ Profile updated successfully:", updatedProfile);
     return updatedProfile;
 
     const token = localStorage.getItem("authToken");
 
-    console.log("✏️ Attempting to update doctor profile...");
-    console.log("📌 Doctor ID:", doctorId);
 
     // Convert FormData to object for inspection and potential JSON conversion
     const dataObject = {};
     for (let [key, value] of formData.entries()) {
       if (value instanceof File) {
-        console.log(`  ${key}: File - ${value.name} (${value.size} bytes)`);
         dataObject[key] = value; // Keep file as-is
       } else {
-        console.log(`  ${key}: ${value}`);
         dataObject[key] = value;
       }
     }
@@ -442,7 +395,6 @@ async function apiUpdateProfile(doctorId, profileData) {
 
     if (hasFiles) {
       // If there are files, send FormData
-      console.log("📤 Sending as FormData (with files)");
       requestConfig = {
         method: "PUT",
         headers: {
@@ -453,7 +405,6 @@ async function apiUpdateProfile(doctorId, profileData) {
       };
     } else {
       // If no files, send as JSON wrapped in 'dto'
-      console.log("📤 Sending as JSON (no files)");
 
       // Create dto wrapper object with all fields as strings
       const dtoData = {};
@@ -462,7 +413,6 @@ async function apiUpdateProfile(doctorId, profileData) {
         dtoData[key] = String(value || "");
       }
 
-      console.log("📦 DTO Data:", dtoData);
 
       // Wrap in dto object
       const requestBody = { dto: dtoData };
@@ -482,13 +432,9 @@ async function apiUpdateProfile(doctorId, profileData) {
       requestConfig,
     );
 
-    console.log(
-      `📊 Response Status: ${response.status} ${response.statusText}`,
-    );
 
     // Get response text first
     const responseText = await response.text();
-    console.log(`📄 Response Body:`, responseText);
 
     // Try to parse JSON safely
     let data = {};
@@ -496,7 +442,7 @@ async function apiUpdateProfile(doctorId, profileData) {
       try {
         data = JSON.parse(responseText);
       } catch {
-        console.error("❌ Invalid JSON response:", responseText);
+        console.error("❌ Invalid JSON response");
         throw new Error("Server returned invalid response");
       }
     }
@@ -541,7 +487,6 @@ async function apiUpdateProfile(doctorId, profileData) {
       throw new Error(errorMessage);
     }
 
-    console.log("✅ Profile updated successfully:", data);
     return data;
   } catch (error) {
     console.error("🔴 Profile update error:", error);
@@ -551,7 +496,6 @@ async function apiUpdateProfile(doctorId, profileData) {
 
 async function getMyDiseasesAndMedicines() {
   try {
-    console.log("📋 Fetching diseases and medicines for logged-in doctor...");
     const response = await apiRequest(
       "/api/Appointment/my-diseases-and-medicines",
       "GET",
@@ -602,7 +546,6 @@ async function completeAppointment(appointmentId, payload) {
       timing: payload?.timing || "",
     };
 
-    console.log("📤 Completing appointment:", appointmentId, requestPayload);
     return await apiRequest(
       `/api/Appointment/complete/${appointmentId}`,
       "PUT",
@@ -616,9 +559,7 @@ async function completeAppointment(appointmentId, payload) {
 
 // Logout
 async function apiLogout() {
-  console.log("🚪 Logging out...");
   localStorage.removeItem("authToken");
-  console.log("✅ Logged out");
 }
 
 // ========================
@@ -633,10 +574,8 @@ async function apiLogout() {
  */
 async function getAllDoctors() {
   try {
-    console.log("📋 Fetching all doctors...");
     const response = await apiRequest("/api/DoctorProfile/all", "GET");
 
-    console.log("✅ Doctors retrieved:", response);
 
     // Format response for frontend if needed
     return Array.isArray(response) ? response : response.data || [];
@@ -655,10 +594,8 @@ async function getAllDoctors() {
  */
 async function getDoctorById(doctorId) {
   try {
-    console.log(`📊 Fetching doctor profile for ID: ${doctorId}`);
     const response = await apiRequest(`/api/DoctorProfile/${doctorId}`, "GET");
 
-    console.log("✅ Doctor profile retrieved:", response);
 
     return response.data || response;
   } catch (error) {
@@ -676,7 +613,6 @@ async function getDoctorById(doctorId) {
  */
 async function getDoctorImage(doctorId) {
   try {
-    console.log(`🖼️ Fetching image for doctor ID: ${doctorId}`);
     const response = await fetch(
       `${BASE_URL}/api/DoctorProfile/${doctorId}/image`,
       {
@@ -692,7 +628,6 @@ async function getDoctorImage(doctorId) {
     // Return blob URL for image rendering
     const blob = await response.blob();
     const imageUrl = URL.createObjectURL(blob);
-    console.log("✅ Doctor image retrieved");
 
     return imageUrl;
   } catch (error) {
@@ -713,8 +648,6 @@ async function uploadDoctorProfileImage(doctorId, imageFile) {
   try {
     const token = localStorage.getItem("authToken");
 
-    console.log(`📤 Uploading profile image for doctor ID: ${doctorId}`);
-    console.log(`📸 File: ${imageFile.name} (${imageFile.size} bytes)`);
 
     // Create FormData with image file
     const formData = new FormData();
@@ -732,13 +665,9 @@ async function uploadDoctorProfileImage(doctorId, imageFile) {
       },
     );
 
-    console.log(
-      `📊 Response Status: ${response.status} ${response.statusText}`,
-    );
 
     // Get response text first
     const responseText = await response.text();
-    console.log(`📄 Response Body:`, responseText);
 
     // Try to parse JSON safely
     let data = {};
@@ -746,7 +675,7 @@ async function uploadDoctorProfileImage(doctorId, imageFile) {
       try {
         data = JSON.parse(responseText);
       } catch {
-        console.error("❌ Invalid JSON response:", responseText);
+        console.error("❌ Invalid JSON response");
         throw new Error("Server returned invalid response");
       }
     }
@@ -778,7 +707,6 @@ async function uploadDoctorProfileImage(doctorId, imageFile) {
       throw new Error(errorMessage);
     }
 
-    console.log("✅ Profile image uploaded successfully:", data);
     return data;
   } catch (error) {
     console.error("🔴 Image upload error:", error);
@@ -799,13 +727,11 @@ async function uploadDoctorProfileImage(doctorId, imageFile) {
  */
 async function getDoctorAvailability(doctorId) {
   try {
-    console.log(`📅 Fetching availability for doctor ID: ${doctorId}`);
     const response = await apiRequest(
       `/api/Appointment/doctor-availability/${doctorId}`,
       "GET",
     );
 
-    console.log("✅ Doctor availability retrieved:", response);
 
     return response.data || response;
   } catch (error) {
@@ -822,13 +748,11 @@ async function getDoctorAvailability(doctorId) {
  */
 async function getMyAppointments() {
   try {
-    console.log("📋 Fetching your appointments...");
     const response = await apiRequest(
       "/api/Appointment/my-appointments",
       "GET",
     );
 
-    console.log("✅ Your appointments retrieved:", response);
 
     return Array.isArray(response) ? response : response.data || [];
   } catch (error) {
@@ -845,13 +769,11 @@ async function getMyAppointments() {
  */
 async function getDoctorAppointments() {
   try {
-    console.log("📋 Fetching doctor's appointments...");
     const response = await apiRequest(
       "/api/Appointment/doctor-appointments",
       "GET",
     );
 
-    console.log("✅ Doctor appointments retrieved:", response);
 
     return Array.isArray(response) ? response : response.data || [];
   } catch (error) {
@@ -872,10 +794,8 @@ async function getDoctorAppointments() {
  */
 async function getMyClinics() {
   try {
-    console.log("🏥 Fetching your clinics...");
     const response = await apiRequest("/api/Clinic/my-clinics", "GET");
 
-    console.log("✅ Your clinics retrieved:", response);
 
     return Array.isArray(response) ? response : response.data || [];
   } catch (error) {
@@ -901,7 +821,6 @@ async function getMyClinics() {
  */
 async function createClinic(clinicData) {
   try {
-    console.log("🏥 Creating new clinic...", clinicData);
 
     // Verify authentication token exists
     const token = localStorage.getItem("authToken");
@@ -911,7 +830,6 @@ async function createClinic(clinicData) {
 
     const response = await apiRequest("/api/Clinic", "POST", clinicData);
 
-    console.log("✅ Clinic created successfully:", response);
 
     return response;
   } catch (error) {
@@ -944,8 +862,6 @@ async function createClinic(clinicData) {
  */
 async function updateClinic(clinicId, clinicData) {
   try {
-    console.log("✏️ Updating clinic with ID:", clinicId);
-    console.log("📝 Update data:", clinicData);
 
     // Verify authentication token exists
     const token = localStorage.getItem("authToken");
@@ -959,7 +875,6 @@ async function updateClinic(clinicId, clinicData) {
       clinicData,
     );
 
-    console.log("✅ Clinic updated successfully:", response);
 
     return response;
   } catch (error) {
@@ -970,7 +885,6 @@ async function updateClinic(clinicId, clinicData) {
 
 async function deleteClinic(clinicId) {
   try {
-    console.log("🗑️ Deleting clinic with ID:", clinicId);
 
     // Verify authentication token exists
     const token = localStorage.getItem("authToken");
@@ -980,7 +894,6 @@ async function deleteClinic(clinicId) {
 
     const response = await apiRequest(`/api/Clinic/${clinicId}`, "DELETE");
 
-    console.log("✅ Clinic deleted successfully:", response);
 
     return response;
   } catch (error) {

@@ -107,16 +107,18 @@ function updateConsultationEmptyStates() {
 }
 
 function initConsultationCollapsibles() {
-  document.querySelectorAll(".cs-collapsible .cs-panel-toggle").forEach((btn) => {
-    if (btn.dataset.bound === "1") return;
-    btn.dataset.bound = "1";
-    btn.addEventListener("click", () => {
-      const panel = btn.closest(".cs-collapsible");
-      if (!panel) return;
-      const isOpen = panel.classList.toggle("is-open");
-      btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  document
+    .querySelectorAll(".cs-collapsible .cs-panel-toggle")
+    .forEach((btn) => {
+      if (btn.dataset.bound === "1") return;
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => {
+        const panel = btn.closest(".cs-collapsible");
+        if (!panel) return;
+        const isOpen = panel.classList.toggle("is-open");
+        btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      });
     });
-  });
 }
 
 function setConsultationSaveLoading(loading) {
@@ -227,7 +229,13 @@ function availableMedications() {
 }
 
 function jsArg(value) {
-  return String(value).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+  return escapeConsultHtml(
+    String(value)
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'")
+      .replace(/\r/g, "\\r")
+      .replace(/\n/g, "\\n"),
+  );
 }
 
 function diagnosisNames(diagnoses) {
@@ -253,7 +261,7 @@ function setLookupHint(message, type = "info") {
           <div class="cs-skeleton cs-skeleton-line short"></div>
         </div>`;
       } else {
-        el.innerHTML = `<div class="cs-inline-state ${type}">${message}</div>`;
+        el.innerHTML = `<div class="cs-inline-state ${type}">${escapeConsultHtml(message)}</div>`;
       }
     }
   });
@@ -370,9 +378,14 @@ function resetConsultationForm() {
 }
 
 async function startConsultation(apptId) {
-  const appt = DB.get("appointments")
+  const currentDoctorId = getCurrentDoctorId();
+  if (!currentDoctorId) {
+    toast("User not logged in.", "error");
+    return;
+  }
+  const appt = SafeDB.get("appointments")
     .map(normalizeAppointment)
-    .find((a) => a.id === String(apptId));
+    .find((a) => a.id === String(apptId) && a.doctorId === currentDoctorId);
   if (!appt) {
     toast("Appointment was not found.", "error");
     return;
@@ -382,8 +395,10 @@ async function startConsultation(apptId) {
     return;
   }
 
-  const rawPatient = DB.get("patients").find(
-    (p) => normalizePatient(p).id === appt.patientId,
+  const rawPatient = SafeDB.get("patients").find(
+    (p) =>
+      normalizePatient(p).id === appt.patientId &&
+      normalizePatient(p).doctorId === currentDoctorId,
   );
   const patient = rawPatient
     ? normalizePatient(rawPatient)
@@ -415,7 +430,7 @@ async function startConsultation(apptId) {
     patient.city || null,
   ].filter(Boolean);
   document.getElementById("csPatientMeta").innerHTML = chips
-    .map((c) => `<span class="cs-meta-chip">${c}</span>`)
+    .map((c) => `<span class="cs-meta-chip">${escapeConsultHtml(c)}</span>`)
     .join("");
 
   const vitalsEl = document.getElementById("csVitals");
@@ -456,7 +471,7 @@ async function startConsultation(apptId) {
       <div class="cs-vital-item ${v.cls}">
         <div class="cs-vital-icon">${v.icon}</div>
         <div class="cs-vital-body">
-          <div class="cs-vital-lbl">${v.lbl}</div>
+          <div class="cs-vital-lbl">${escapeConsultHtml(v.lbl)}</div>
           <div class="cs-vital-val">${v.badge || escapeConsultHtml(v.val)}</div>
         </div>
       </div>`,
@@ -470,7 +485,7 @@ async function startConsultation(apptId) {
   if (patient.medicalHistory.anaemia) history.push("Anaemia");
   if (patient.chronic) history.push(`Chronic: ${patient.chronic}`);
   document.getElementById("csHistory").innerHTML = history.length
-    ? `<div style="display:flex;flex-wrap:wrap;gap:6px;">${history.map((c) => `<span class="badge badge-pending">${c}</span>`).join("")}</div>`
+    ? `<div style="display:flex;flex-wrap:wrap;gap:6px;">${history.map((c) => `<span class="badge badge-pending">${escapeConsultHtml(c)}</span>`).join("")}</div>`
     : '<p style="color:var(--text-muted);font-size:13px;margin:0;">No known conditions</p>';
 
   const prevVisits = patient.visits.length
@@ -488,8 +503,8 @@ async function startConsultation(apptId) {
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <div class="visit-date">${formatDate(v.date)}</div>
           </div>
-          <div class="visit-diagnosis">${diagnosisNames(v.diagnoses).join(" - ") || "-"}</div>
-          ${v.medications?.length ? `<div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;">${v.medications.map((m) => m.name).join(", ")}</div>` : ""}
+          <div class="visit-diagnosis">${escapeConsultHtml(diagnosisNames(v.diagnoses).join(" - ") || "-")}</div>
+          ${v.medications?.length ? `<div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;">${escapeConsultHtml(v.medications.map((m) => m.name).join(", "))}</div>` : ""}
         </div>`,
         )
         .join("")
@@ -516,7 +531,7 @@ async function searchDiagnosis(q) {
   await loadConsultationLookups();
 
   if (consultationLookups.error) {
-    drop.innerHTML = `<div class="autocomplete-item" style="color:var(--danger);">${consultationLookups.error}</div>`;
+    drop.innerHTML = `<div class="autocomplete-item" style="color:var(--danger);">${escapeConsultHtml(consultationLookups.error)}</div>`;
     return;
   }
 
@@ -535,8 +550,8 @@ async function searchDiagnosis(q) {
       .map(
         (d, index) => `
     <div class="autocomplete-item disease-option ${d.severity}" data-index="${index}" tabindex="-1" onclick="addDiagnosisById('${jsArg(d.id)}')">
-      <span class="disease-option-main">${d.name}</span>
-      <span class="severity-pill ${d.severity}">${d.severity}</span>
+      <span class="disease-option-main">${escapeConsultHtml(d.name)}</span>
+      <span class="severity-pill ${d.severity}">${escapeConsultHtml(d.severity)}</span>
     </div>`,
       )
       .join("") ||
@@ -605,7 +620,7 @@ async function searchDrug(q) {
   await loadConsultationLookups();
 
   if (consultationLookups.error) {
-    drop.innerHTML = `<div class="autocomplete-item" style="color:var(--danger);">${consultationLookups.error}</div>`;
+    drop.innerHTML = `<div class="autocomplete-item" style="color:var(--danger);">${escapeConsultHtml(consultationLookups.error)}</div>`;
     return;
   }
 
@@ -624,7 +639,7 @@ async function searchDrug(q) {
       .map(
         (m, index) => `
     <div class="autocomplete-item med-option" data-index="${index}" tabindex="-1" onclick="selectDrug('${jsArg(m.id)}')">
-      <span>${m.name}</span>
+      <span>${escapeConsultHtml(m.name)}</span>
     </div>`,
       )
       .join("") ||
@@ -694,7 +709,8 @@ function removeMedication(index) {
   csState.medications.splice(index, 1);
   renderMeds();
   updateConsultationEmptyStates();
-  if (med) logConsultationActivity(`Medication removed: ${med.name}`, "warning");
+  if (med)
+    logConsultationActivity(`Medication removed: ${med.name}`, "warning");
 }
 
 function toggleMedCard(index) {
@@ -748,7 +764,7 @@ function renderMeds() {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <div class="cs-med-body"${collapsed ? ' hidden' : ""}>
+      <div class="cs-med-body"${collapsed ? " hidden" : ""}>
         <div class="cs-med-fields">
           <div class="cs-med-select-wrap">
             <label class="cs-med-lbl">Dose</label>
@@ -874,9 +890,14 @@ async function saveConsultation(e) {
   e.preventDefault();
   syncLastAppliedMedicationFields();
   const apptId = document.getElementById("csApptId").value;
-  const appt = DB.get("appointments")
+  const currentDoctorId = getCurrentDoctorId();
+  if (!currentDoctorId) {
+    toast("User not logged in.", "error");
+    return;
+  }
+  const appt = SafeDB.get("appointments")
     .map(normalizeAppointment)
-    .find((a) => a.id === apptId);
+    .find((a) => a.id === apptId && a.doctorId === currentDoctorId);
   if (!appt) {
     toast("Appointment was not found.", "error");
     return;
@@ -925,18 +946,19 @@ async function saveConsultation(e) {
       id: DB.genId(),
       apptId,
       patientId: appt.patientId,
+      doctorId: currentDoctorId,
       ...visit,
     };
 
-    const consultations = DB.get("consultations");
+    const consultations = SafeDB.get("consultations");
     consultations.push(consult);
-    DB.set("consultations", consultations);
+    SafeDB.set("consultations", consultations);
     addPatientVisit(consult);
 
-    const appts = DB.get("appointments").map(normalizeAppointment);
+    const appts = SafeDB.get("appointments").map(normalizeAppointment);
     const idx = appts.findIndex((a) => a.id === apptId);
     if (idx >= 0) appts[idx].status = "Completed";
-    DB.set("appointments", appts);
+    SafeDB.set("appointments", appts);
 
     try {
       await refreshAppointmentsFromApi();

@@ -7,9 +7,10 @@ function setTextIfPresent(id, value) {
 }
 
 function renderProfile() {
+  const currentDoctorId = getCurrentDoctorId();
   const doc = normalizeDoctor(DB.get("doctor", {}));
-  const patients = DB.get("patients").map(normalizePatient);
-  const appts = DB.get("appointments").map(normalizeAppointment);
+  const patients = SafeDB.get("patients").map(normalizePatient);
+  const appts = SafeDB.get("appointments").map(normalizeAppointment);
   const clinics = DB.get("clinics").map(normalizeClinic);
   const now = new Date();
   const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -70,6 +71,16 @@ function renderClinics() {
   grid.innerHTML = clinics
     .map((c) => {
       const days = toWorkingDaysArray(c.workingDays);
+      const clinicIdArg = escapeJsString(c.clinicId);
+      const safeClinicName = escapeHtml(valueOrDash(c.clinicName));
+      const safeLocation = escapeHtml(valueOrDash(c.location));
+      const safePhone = escapeHtml(c.clinicPhone);
+      const safeEmail = escapeHtml(c.clinicEmail);
+      const safeDays = days.map((day) => escapeHtml(day)).join(", ");
+      const safeStartTime = escapeHtml(c.workStartTime);
+      const safeEndTime = escapeHtml(c.workEndTime);
+      const safePrice = escapeHtml(c.doctorPrice);
+      const safeSlotDuration = escapeHtml(c.slotDurationMinutes);
       return `
       <div class="clinic-card">
         <div class="clinic-card-header">
@@ -77,28 +88,28 @@ function renderClinics() {
             <div class="clinic-icon">🏥</div>
           </div>
           <div class="clinic-card-actions">
-            <button class="btn btn-ghost" onclick="showEditClinicModal('${c.clinicId}')" style="padding:8px 12px;font-size:12px;font-weight:600;" title="Edit Clinic">Edit</button>
-            <button class="btn btn-danger" onclick="deleteClinic('${c.clinicId}')" style="padding:8px 12px;font-size:12px;font-weight:600;" title="Delete Clinic">Delete</button>
+            <button class="btn btn-ghost" onclick="showEditClinicModal('${clinicIdArg}')" style="padding:8px 12px;font-size:12px;font-weight:600;" title="Edit Clinic">Edit</button>
+            <button class="btn btn-danger" onclick="deleteClinic('${clinicIdArg}')" style="padding:8px 12px;font-size:12px;font-weight:600;" title="Delete Clinic">Delete</button>
           </div>
         </div>
-        <div class="clinic-name">${valueOrDash(c.clinicName)}</div>
+        <div class="clinic-name">${safeClinicName}</div>
         <div class="clinic-info-group">
-          <div class="clinic-address"><strong>📍</strong> ${valueOrDash(c.location)}</div>
-          ${c.clinicPhone ? `<div class="clinic-address"><strong>📞</strong> ${c.clinicPhone}</div>` : ""}
-          ${c.clinicEmail ? `<div class="clinic-address"><strong>✉️</strong> ${c.clinicEmail}</div>` : ""}
+          <div class="clinic-address"><strong>📍</strong> ${safeLocation}</div>
+          ${c.clinicPhone ? `<div class="clinic-address"><strong>📞</strong> ${safePhone}</div>` : ""}
+          ${c.clinicEmail ? `<div class="clinic-address"><strong>✉️</strong> ${safeEmail}</div>` : ""}
         </div>
-        ${days.length ? `<div class="clinic-info-group"><div class="clinic-address"><strong>📅</strong> ${days.join(", ")}</div></div>` : ""}
+        ${days.length ? `<div class="clinic-info-group"><div class="clinic-address"><strong>📅</strong> ${safeDays}</div></div>` : ""}
         ${
           c.workStartTime && c.workEndTime
-            ? `<div class="clinic-info-group"><div class="clinic-address"><strong>🕐</strong> ${c.workStartTime} – ${c.workEndTime}</div></div>`
+            ? `<div class="clinic-info-group"><div class="clinic-address"><strong>🕐</strong> ${safeStartTime} – ${safeEndTime}</div></div>`
             : ""
         }
         ${
           c.doctorPrice
-            ? `<div class="clinic-info-group"><div class="clinic-address" style="margin-bottom: 0;"><strong>💰</strong> <span class="badge badge-confirmed">${c.doctorPrice} EGP</span></div>
-               ${c.slotDurationMinutes ? `<div class="clinic-address" style="margin-top: 8px; margin-bottom: 0; font-size: 12px;"><strong>⏱️</strong> ${c.slotDurationMinutes} min slots</div>` : ""}</div>`
+            ? `<div class="clinic-info-group"><div class="clinic-address" style="margin-bottom: 0;"><strong>💰</strong> <span class="badge badge-confirmed">${safePrice} EGP</span></div>
+               ${c.slotDurationMinutes ? `<div class="clinic-address" style="margin-top: 8px; margin-bottom: 0; font-size: 12px;"><strong>⏱️</strong> ${safeSlotDuration} min slots</div>` : ""}</div>`
             : c.slotDurationMinutes
-              ? `<div class="clinic-info-group"><div class="clinic-address" style="font-size: 12px;"><strong>⏱️</strong> ${c.slotDurationMinutes} min slots</div></div>`
+              ? `<div class="clinic-info-group"><div class="clinic-address" style="font-size: 12px;"><strong>⏱️</strong> ${safeSlotDuration} min slots</div></div>`
               : ""
         }
       </div>`;

@@ -1,5 +1,24 @@
 // UTILS
 // ============================================================
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeJsString(value) {
+  return escapeHtml(
+    String(value ?? "")
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'")
+      .replace(/\r/g, "\\r")
+      .replace(/\n/g, "\\n"),
+  );
+}
+
 function toast(msg, type = "info", duration) {
   const durations = {
     success: 3000,
@@ -11,10 +30,11 @@ function toast(msg, type = "info", duration) {
   const c = document.getElementById("toastContainer");
   const t = document.createElement("div");
   t.className = `toast ${type}`;
+  const safeMsg = escapeHtml(msg);
   const icons = { success: "✅", error: "❌", info: "ℹ️", warning: "⚠️" };
   t.innerHTML = `
     <span style="flex-shrink:0;">${icons[type] || "ℹ️"}</span>
-    <span style="flex:1;">${msg}</span>
+    <span style="flex:1;">${safeMsg}</span>
     <button type="button" aria-label="Dismiss notification" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:0;line-height:1;flex-shrink:0;">✕</button>
     <div class="toast-progress"></div>
   `;
@@ -78,6 +98,27 @@ function closeModal(id) {
 }
 function closeModal(id) {
   document.getElementById(id).classList.add("hidden");
+}
+function setSidebarOpen(isOpen) {
+  const sidebar = document.getElementById("sidebar");
+  if (!sidebar) return;
+  const open = Boolean(isOpen);
+  sidebar.classList.toggle("open", open);
+  const btn = document.getElementById("mobileMenuBtn");
+  if (btn) {
+    btn.setAttribute("aria-expanded", String(open));
+    btn.setAttribute(
+      "aria-label",
+      open ? "Close navigation menu" : "Open navigation menu",
+    );
+  }
+}
+function toggleSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  setSidebarOpen(!sidebar?.classList.contains("open"));
+}
+function closeSidebar() {
+  setSidebarOpen(false);
 }
 function formatDate(d) {
   return new Date(d).toLocaleDateString("en-EG", {
@@ -425,6 +466,19 @@ function initPasswordToggles() {
     });
   });
 }
+
+document.addEventListener("click", (event) => {
+  if (window.innerWidth > 768) return;
+  if (event.target.closest("#sidebar .nav-item[data-page]")) closeSidebar();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeSidebar();
+});
+
+window.addEventListener("resize", () => {
+  if (window.innerWidth > 768) closeSidebar();
+});
 
 document.addEventListener("DOMContentLoaded", () => {
   initPasswordToggles();

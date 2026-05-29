@@ -311,7 +311,7 @@
                   <option>Psychiatry</option>
                   <option>Pediatrics</option>
                   <option>Orthopedics</option>
-                  <option>ENT</option>
+                  <option>ENT (Ear, Nose, and Throat)</option>
                   <option>Dentistry</option>
                   <option>Ophthalmology</option>
                   <option>Gynecology</option>
@@ -436,11 +436,30 @@
             </div>
           </div>
         </aside>
+        <div
+          class="sidebar-backdrop"
+          id="sidebarBackdrop"
+          onclick="closeSidebar()"
+          aria-hidden="true"
+        ></div>
 
         <!-- MAIN CONTENT -->
         <main class="main-content">
           <!-- TOPBAR -->
           <header class="topbar">
+            <button
+              type="button"
+              class="mobile-menu-btn"
+              id="mobileMenuBtn"
+              onclick="toggleSidebar()"
+              aria-label="Open navigation menu"
+              aria-controls="sidebar"
+              aria-expanded="false"
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
             <div>
               <div class="topbar-title" id="topbarTitle">Dashboard</div>
               <div class="topbar-subtitle" id="topbarSubtitle">

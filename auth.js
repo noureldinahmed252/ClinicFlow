@@ -139,11 +139,6 @@ function checkPasswordStrength(val) {
   bar.style.width = level.width;
   bar.style.background = level.color;
   txt.textContent = level.label;
-
-  // Show requirements
-  if (result.failures.length > 0) {
-    console.log("❌ Password requirements not met:", result.failures);
-  }
 }
 
 function launchApp() {
@@ -170,7 +165,7 @@ function launchApp() {
   updatePendingBadge();
   if (
     typeof loadConsultationLookups === "function" &&
-    localStorage.getItem("authToken")
+    AuthValidator.hasValidToken()
   ) {
     loadConsultationLookups().catch((error) =>
       console.warn("Consultation lookup preload failed:", error),
@@ -220,3 +215,39 @@ function setAuthLoading(btn, loading) {
     btn.disabled = false;
   }
 }
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const token = AuthValidator.getValidToken();
+
+    if (!token) {
+      return; // No token -> show login page
+    }
+
+    // 🔐 FIX: Verify doctorId exists before launching
+    // If token is valid but doctorId missing, session is incomplete
+    const doctorId = localStorage.getItem("doctorId");
+    if (!doctorId) {
+      console.warn(
+        "Valid token exists but doctorId is missing. Clearing session.",
+      );
+      AuthValidator.clearToken();
+      return; // Show login page
+    }
+
+    // Valid token + doctorId exists -> refresh API data first
+    try {
+      if (typeof refreshAppointmentsFromApi === "function") {
+        await refreshAppointmentsFromApi();
+      }
+    } catch (error) {
+      console.warn("Session refresh sync failed:", error);
+    }
+    launchApp();
+  } catch (error) {
+    console.error("Session restore failed:", error);
+
+    AuthValidator.clearToken();
+
+    document.getElementById("loginPage").classList.remove("hidden");
+  }
+});
