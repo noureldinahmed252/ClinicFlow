@@ -10,7 +10,7 @@
   --danger-light: #fee2e2;
   --warning: #f59e0b;
   --warning-light: #fef3c7;
-  --purple: #8b5cf6;
+  --purple: #10b981;
   --purple-light: #ede9fe;
   --rose: #f43f5e;
   --teal: #14b8a6;
@@ -2616,6 +2616,10 @@ tbody tr:hover .patient-initials {
   text-align: center;
   flex-shrink: 0;
 }
+.nav-icon svg {
+  display: block;
+  margin: 0 auto;
+}
 
 .sidebar-footer {
   padding: 14px 10px;
@@ -5194,6 +5198,560 @@ tbody td {
   padding: 14px 16px;
   margin-bottom: 14px;
   box-shadow: var(--shadow-card);
+}
+
+/* Doctor Messages */
+#appDoctorMessages .doctor-messages-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+#appDoctorMessages .chat-card {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+/* ── Chat Header ── */
+#appDoctorMessages .chat-header {
+  padding: 20px var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-xl);
+  flex-shrink: 0;
+  background: var(--bg);
+}
+
+#appDoctorMessages .chat-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex: 1;
+}
+
+#appDoctorMessages .chat-header-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+
+#appDoctorMessages .admin-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+}
+
+#appDoctorMessages .online-indicator {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  background: #10b981;
+  border: 3px solid var(--bg-card);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+}
+
+#appDoctorMessages .chat-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+#appDoctorMessages .chat-header-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+#appDoctorMessages .chat-header-status {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+#appDoctorMessages .chat-header-stats {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 var(--space-md);
+}
+
+#appDoctorMessages .stat-item {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#appDoctorMessages .stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+#appDoctorMessages .stat-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+#appDoctorMessages .stat-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--border-subtle);
+}
+
+/* ── Chat Area ── */
+#appDoctorMessages .chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+#appDoctorMessages .chat-messages-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+}
+
+#appDoctorMessages .chat-messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── Date Separator ── */
+#appDoctorMessages .chat-date-separator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin: 16px 0 12px 0;
+  opacity: 0.7;
+}
+
+#appDoctorMessages .chat-date-separator::before,
+#appDoctorMessages .chat-date-separator::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+#appDoctorMessages .chat-date-separator-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 0 var(--space-md);
+}
+
+/* ── Chat Bubble ── */
+#appDoctorMessages .chat-bubble {
+  display: flex;
+  margin-bottom: 2px;
+  animation: slideIn 0.25s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#appDoctorMessages .chat-bubble.from-ministry {
+  justify-content: flex-start;
+  padding-right: 15%;
+}
+
+#appDoctorMessages .chat-bubble.from-doctor {
+  justify-content: flex-end;
+  padding-left: 15%;
+}
+
+#appDoctorMessages .chat-bubble-content {
+  max-width: 70%;
+  padding: 10px 16px;
+  border-radius: 18px;
+  word-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.4;
+  font-size: 14px;
+}
+
+#appDoctorMessages .chat-bubble.from-ministry .chat-bubble-content {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+#appDoctorMessages .chat-bubble.from-doctor .chat-bubble-content {
+  background: linear-gradient(135deg, var(--primary), #0284c7);
+  color: white;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+}
+
+#appDoctorMessages .chat-bubble.from-doctor .chat-bubble-content:hover {
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+}
+
+/* ── Message Header (Sender Badge) ── */
+#appDoctorMessages .chat-bubble-header {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  opacity: 0.85;
+}
+
+#appDoctorMessages .chat-bubble.from-ministry .chat-bubble-header {
+  color: var(--primary);
+}
+
+#appDoctorMessages .chat-bubble.from-doctor .chat-bubble-header {
+  display: none;
+}
+
+/* ── Empty State ── */
+#appDoctorMessages .chat-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: var(--space-xl);
+  flex: 1;
+}
+
+#appDoctorMessages .chat-empty-state svg {
+  opacity: 0.4;
+  color: var(--text-muted);
+}
+
+#appDoctorMessages .empty-state-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 8px;
+}
+
+#appDoctorMessages .empty-state-subtext {
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 300px;
+}
+
+/* ── Loading State ── */
+#appDoctorMessages .chat-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 1;
+  color: var(--text-muted);
+}
+
+#appDoctorMessages .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+#appDoctorMessages .loading-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ── Message Composer ── */
+#appDoctorMessages .chat-composer-wrapper {
+  padding: 16px var(--space-lg);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+#appDoctorMessages .composer-input-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+#appDoctorMessages .chat-composer-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 24px;
+  color: var(--text);
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-height: 44px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+#appDoctorMessages .chat-composer-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
+
+#appDoctorMessages .chat-composer-input::placeholder {
+  color: var(--text-muted);
+}
+
+#appDoctorMessages .chat-send-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+}
+
+#appDoctorMessages .chat-send-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+}
+
+#appDoctorMessages .chat-send-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#appDoctorMessages .chat-send-btn.loading {
+  pointer-events: none;
+}
+
+#appDoctorMessages .chat-send-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ── Scrollbar Styling ── */
+#appDoctorMessages .chat-messages-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+#appDoctorMessages .chat-messages-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#appDoctorMessages .chat-messages-wrapper::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+#appDoctorMessages .chat-messages-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--border-subtle);
+}
+
+/* ── Responsive Design ── */
+@media (max-width: 980px) {
+  #appDoctorMessages .chat-card {
+    max-height: 70vh;
+  }
+
+  #appDoctorMessages .chat-bubble.from-ministry {
+    padding-right: 10%;
+  }
+
+  #appDoctorMessages .chat-bubble.from-doctor {
+    padding-left: 10%;
+  }
+
+  #appDoctorMessages .chat-header-stats {
+    gap: 16px;
+    padding: 0 var(--space-sm);
+  }
+
+  #appDoctorMessages .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  #appDoctorMessages .stat-value {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  #appDoctorMessages .chat-card {
+    height: 100%;
+    min-height: 500px;
+    max-height: 100%;
+    border-radius: 8px;
+  }
+
+  #appDoctorMessages .chat-header {
+    padding: 14px var(--space-md);
+    gap: var(--space-md);
+  }
+
+  #appDoctorMessages .chat-header-left {
+    gap: var(--space-sm);
+  }
+
+  #appDoctorMessages .admin-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  #appDoctorMessages .chat-header-title {
+    font-size: 14px;
+  }
+
+  #appDoctorMessages .chat-header-status {
+    font-size: 11px;
+  }
+
+  #appDoctorMessages .chat-header-stats {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  #appDoctorMessages .stat-divider {
+    display: none;
+  }
+
+  #appDoctorMessages .stat-item {
+    text-align: right;
+    flex-direction: row;
+    gap: 6px;
+    align-items: center;
+  }
+
+  #appDoctorMessages .stat-label {
+    font-size: 10px;
+  }
+
+  #appDoctorMessages .stat-value {
+    font-size: 12px;
+  }
+
+  #appDoctorMessages .chat-messages-wrapper {
+    padding: var(--space-md);
+  }
+
+  #appDoctorMessages .chat-bubble.from-ministry {
+    padding-right: 5%;
+  }
+
+  #appDoctorMessages .chat-bubble.from-doctor {
+    padding-left: 5%;
+  }
+
+  #appDoctorMessages .chat-bubble-content {
+    max-width: 85%;
+    padding: 9px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+  }
+
+  #appDoctorMessages .chat-composer-wrapper {
+    padding: 12px var(--space-md);
+  }
+
+  #appDoctorMessages .composer-input-wrapper {
+    gap: 8px;
+  }
+
+  #appDoctorMessages .chat-composer-input {
+    padding: 10px 14px;
+    font-size: 13px;
+    min-height: 40px;
+  }
+
+  #appDoctorMessages .chat-send-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  #appDoctorMessages .chat-send-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  #appDoctorMessages .chat-date-separator {
+    margin: 12px 0 8px 0;
+  }
+
+  #appDoctorMessages .chat-date-separator-text {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  #appDoctorMessages .chat-bubble-content {
+    max-width: 90%;
+  }
+
+  #appDoctorMessages .empty-state-text {
+    font-size: 14px;
+  }
+
+  #appDoctorMessages .empty-state-subtext {
+    font-size: 12px;
+  }
 }
 
 /* ── TABLE CARD ── */

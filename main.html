@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MediCare Pro — Clinic Management</title>
+    <title>Medical Book — Clinic Management</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -53,7 +53,7 @@
           <div class="auth-logo">
             <div class="auth-logo-icon">🏥</div>
             <h1>
-              MediCare <em style="color: #0ea5e9; font-style: normal">Pro</em>
+              Medical <em style="color: #0ea5e9; font-style: normal"> Book</em>
             </h1>
             <p>Clinic Management System</p>
           </div>
@@ -381,7 +381,7 @@
             <div style="display: flex; align-items: center">
               <div class="brand-logo">🏥</div>
               <div>
-                <h1>Medi<span>Care</span> Pro</h1>
+                <h1>Medi<span>Cal</span> Book</h1>
                 <p>Clinic Management System</p>
               </div>
             </div>
@@ -411,6 +411,31 @@
               onclick="showApp('patients')"
             >
               <span class="nav-icon">👥</span> Patients
+            </button>
+            <button
+              class="nav-item"
+              data-page="doctorMessages"
+              onclick="showApp('doctorMessages')"
+            >
+              <span class="nav-icon" aria-hidden="true">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"
+                  />
+                  <path d="M8 9h8" />
+                  <path d="M8 13h5" />
+                </svg>
+              </span>
+              Doctor Messages
             </button>
             <div class="nav-section-label">Account</div>
             <button
@@ -1033,9 +1058,9 @@
                     <span class="cal-legend-item"
                       ><span
                         class="cal-legend-dot"
-                        style="background: var(--primary)"
+                        style="background: var(--danger)"
                       ></span
-                      >1 appt</span
+                      > cancelled</span
                     >
                     <span class="cal-legend-item"
                       ><span
@@ -1149,6 +1174,94 @@
                   </thead>
                   <tbody id="patientsBody"></tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- DOCTOR MESSAGES -->
+          <div id="appDoctorMessages" class="page-content hidden">
+            <div class="page-header-row">
+              <div>
+                
+              </div>
+            </div>
+
+            <div class="doctor-messages-container">
+              <div class="card chat-card">
+                <!-- Chat Header -->
+                <div class="chat-header">
+                  <div class="chat-header-left">
+                    <div class="chat-header-avatar">
+                      <div class="admin-avatar">🏥</div>
+                      <div class="online-indicator"></div>
+                    </div>
+                    <div class="chat-header-info">
+                      <div class="chat-header-title">Healthcare Administration</div>
+                      <div class="chat-header-status">Online • Response time within 24 hours</div>
+                    </div>
+                  </div>
+                  <div class="chat-header-stats">
+                    <div class="stat-item">
+                      <div class="stat-label">Total Messages</div>
+                      <div class="stat-value" id="chatMessageCount">0</div>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                      <div class="stat-label">Latest Date</div>
+                      <div class="stat-value" id="chatLastTime">—</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Messages Area -->
+                <div class="chat-area">
+                  <!-- Messages List -->
+                  <div class="chat-messages-wrapper">
+                    <div class="chat-messages-list" id="chatMessagesList">
+                      <!-- Messages rendered here -->
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div class="chat-empty-state hidden" id="chatEmptyState">
+                      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                      <div class="empty-state-text">Start a conversation</div>
+                      <div class="empty-state-subtext">Send your first message to Healthcare Administration</div>
+                    </div>
+                  </div>
+
+                  <!-- Loading State -->
+                  <div class="chat-loading hidden" id="chatLoading">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">Loading messages...</div>
+                  </div>
+                </div>
+
+                <!-- Message Composer -->
+                <div class="chat-composer-wrapper">
+                  <form id="doctorMessageForm" onsubmit="handleDoctorMessageSubmit(event)" novalidate>
+                    <div class="composer-input-wrapper">
+                      <textarea
+                        id="doctorMessageBody"
+                        class="chat-composer-input"
+                        placeholder="Type your message... (Shift + Enter for new line)"
+                        rows="1"
+                      ></textarea>
+                      <button 
+                        type="submit" 
+                        id="doctorMessageSubmitBtn"
+                        class="btn chat-send-btn"
+                        aria-label="Send message"
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="m22 2-7 20-4-9-9-4Z" />
+                          <path d="M22 2 11 13" />
+                        </svg>
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
           </div>

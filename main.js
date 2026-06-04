@@ -850,6 +850,7 @@ function showApp(page) {
     "dashboard",
     "calendar",
     "patients",
+    "doctorMessages",
     "profile",
     "consultation",
     "patientDetails",
@@ -877,6 +878,10 @@ function showApp(page) {
     dashboard: ["Dashboard", "Welcome back, Doctor"],
     calendar: ["Appointments", "Manage your schedule"],
     patients: ["Patients", "Your patient registry"],
+    doctorMessages: [
+      "Doctor Messages",
+      "Communicate directly with healthcare administration and receive responses to your requests.",
+    ],
     profile: ["My Profile", "Manage your account"],
     consultation: ["Consultation", "Patient examination"],
     patientDetails: ["Patient Details", "Full medical record"],
@@ -912,10 +917,334 @@ function showApp(page) {
     renderProfile();
     setTimeout(() => gsapRevealCards(".info-card, .clinic-card"), 100);
   }
+  if (page === "doctorMessages") {
+    loadDoctorMessages();
+    setTimeout(
+      () =>
+        gsapRevealCards(
+          "#appDoctorMessages .chat-card",
+        ),
+      100,
+    );
+  }
 
   // Add data-status to appointment items after render
   setTimeout(addApptDataStatus, 100);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DOCTOR MESSAGES - PROFESSIONAL HEALTHCARE CHAT CENTER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Load doctor messages from API
+ */
+async function loadDoctorMessages() {
+  try {
+    const chatLoading = document.getElementById("chatLoading");
+    const chatMessagesList = document.getElementById("chatMessagesList");
+    const chatEmptyState = document.getElementById("chatEmptyState");
+    const chatArea = document.querySelector("#appDoctorMessages .chat-area");
+
+    // Show loading state
+    if (chatLoading) chatLoading.classList.remove("hidden");
+    if (chatMessagesList) chatMessagesList.innerHTML = "";
+    if (chatEmptyState) chatEmptyState.classList.add("hidden");
+    if (chatArea) chatArea.style.display = "flex";
+
+    // Fetch messages from API
+    const response = await apiRequest(
+      "/api/doctor-messages/my-messages",
+      "GET"
+    );
+    const messages = Array.isArray(response) ? response : [];
+
+    // Hide loading
+    if (chatLoading) chatLoading.classList.add("hidden");
+
+    // Render messages
+    if (messages.length === 0) {
+      if (chatEmptyState) chatEmptyState.classList.remove("hidden");
+      if (chatMessagesList) chatMessagesList.innerHTML = "";
+      updateChatStats(0, null);
+    } else {
+      if (chatEmptyState) chatEmptyState.classList.add("hidden");
+      const sortedMessages = sortDoctorMessages(messages);
+      renderDoctorMessages(sortedMessages);
+      updateChatStats(
+        messages.length,
+        sortedMessages[sortedMessages.length - 1]?.createdAt
+      );
+    }
+
+    // Auto-scroll to latest after render completes
+    setTimeout(autoScrollToLatestMessage, 150);
+  } catch (error) {
+    console.error("🔴 Failed to load doctor messages:", error);
+    const chatLoading = document.getElementById("chatLoading");
+    if (chatLoading) chatLoading.classList.add("hidden");
+    
+    // Show empty state on error
+    const chatEmptyState = document.getElementById("chatEmptyState");
+    if (chatEmptyState) chatEmptyState.classList.remove("hidden");
+  }
+}
+
+/**
+ * Update chat header stats
+ */
+function updateChatStats(messageCount, lastDateValue) {
+  const countEl = document.getElementById("chatMessageCount");
+  const lastDateEl = document.getElementById("chatLastTime");
+  
+  if (countEl) countEl.textContent = messageCount;
+  
+  if (lastDateEl) {
+    if (lastDateValue) {
+      lastDateEl.textContent = getDateGroupLabel(lastDateValue);
+    } else {
+      lastDateEl.textContent = "—";
+    }
+  }
+}
+
+/**
+ * Parse the backend calendar date without creating an implied clock time.
+ */
+function parseMessageDate(value) {
+  if (!value || typeof value !== "string") return null;
+
+  const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return {
+    date,
+    key: `${match[1]}-${match[2]}-${match[3]}`,
+  };
+}
+
+/**
+ * Sort messages by calendar date, then by backend message id.
+ */
+function sortDoctorMessages(messages) {
+  return [...messages]
+    .map((message, index) => ({ message, index }))
+    .sort((a, b) => {
+      const aDate = parseMessageDate(a.message.createdAt);
+      const bDate = parseMessageDate(b.message.createdAt);
+
+      if (aDate && bDate && aDate.key !== bDate.key) {
+        return aDate.key.localeCompare(bDate.key);
+      }
+
+      if (aDate && !bDate) return -1;
+      if (!aDate && bDate) return 1;
+
+      const aId = Number(a.message.messageId);
+      const bId = Number(b.message.messageId);
+
+      if (Number.isFinite(aId) && Number.isFinite(bId) && aId !== bId) {
+        return aId - bId;
+      }
+
+      return a.index - b.index;
+    })
+    .map(({ message }) => message);
+}
+
+/**
+ * Get date group label for message
+ */
+function getDateGroupLabel(dateValue) {
+  const messageDate = parseMessageDate(dateValue);
+  if (!messageDate) return "Unknown Date";
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (messageDate.date.getTime() === today.getTime()) {
+    return "Today";
+  }
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (messageDate.date.getTime() === yesterday.getTime()) {
+    return "Yesterday";
+  }
+
+  return messageDate.date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+/**
+ * Render doctor messages as professional chat bubbles
+ */
+function renderDoctorMessages(messages) {
+  const chatMessagesList = document.getElementById("chatMessagesList");
+  if (!chatMessagesList) return;
+
+  const sortedMessages = sortDoctorMessages(messages);
+
+  let lastDateKey = null;
+  let html = "";
+
+  sortedMessages.forEach((msg) => {
+    const isFromDoctor = msg.sender !== "Ministry";
+    const bubbleClass = isFromDoctor ? "from-doctor" : "from-ministry";
+    const messageDate = parseMessageDate(msg.createdAt);
+    const dateKey = messageDate?.key || "unknown";
+    const dateGroup = getDateGroupLabel(msg.createdAt);
+
+    // Add date separator if date changed
+    if (dateKey !== lastDateKey) {
+      html += `
+        <div class="chat-date-separator">
+          <span class="chat-date-separator-text">${escapeHtml(dateGroup)}</span>
+        </div>
+      `;
+      lastDateKey = dateKey;
+    }
+
+    // Add message bubble
+    html += `
+      <div class="chat-bubble ${bubbleClass}">
+        <div class="chat-bubble-content">
+          ${!isFromDoctor ? `<div class="chat-bubble-header">Healthcare Administration</div>` : ""}
+          <div>${escapeHtml(msg.messageBody)}</div>
+        </div>
+      </div>
+    `;
+  });
+
+  chatMessagesList.innerHTML = html;
+}
+
+/**
+ * Auto-scroll messages list to bottom
+ */
+function autoScrollToLatestMessage() {
+  const wrapper = document.querySelector(
+    "#appDoctorMessages .chat-messages-wrapper"
+  );
+  if (wrapper) {
+    // Use requestAnimationFrame for smooth scroll
+    wrapper.scrollTop = wrapper.scrollHeight;
+  }
+}
+
+/**
+ * Send doctor message to API
+ */
+async function handleDoctorMessageSubmit(event) {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const bodyInput = document.getElementById("doctorMessageBody");
+  const submitBtn = document.getElementById("doctorMessageSubmitBtn");
+  const messageBody = bodyInput?.value?.trim();
+
+  // Validation
+  if (!messageBody) {
+    if (bodyInput) {
+      bodyInput.classList.add("is-invalid");
+      bodyInput.setAttribute("aria-invalid", "true");
+      bodyInput.focus();
+    }
+    return;
+  }
+
+  // Clear error state
+  if (bodyInput) {
+    bodyInput.classList.remove("is-invalid");
+    bodyInput.removeAttribute("aria-invalid");
+  }
+
+  // Set loading state
+  if (submitBtn) {
+    submitBtn.classList.add("loading");
+    submitBtn.disabled = true;
+  }
+
+  try {
+    // Send message to API
+    const response = await apiRequest(
+      "/api/doctor-messages/send",
+      "POST",
+      {
+        messageBody,
+      }
+    );
+
+    // Clear form
+    form.reset();
+    if (bodyInput) bodyInput.style.height = "auto";
+
+    // Show success toast
+    toast("Message sent successfully", "success");
+
+    // Reload messages
+    await loadDoctorMessages();
+  } catch (error) {
+    console.error("🔴 Failed to send message:", error);
+    toast("Failed to send message. Please try again.", "error");
+  } finally {
+    if (submitBtn) {
+      submitBtn.classList.remove("loading");
+      submitBtn.disabled = false;
+    }
+  }
+}
+
+/**
+ * Handle textarea auto-resize and Enter key
+ */
+document.addEventListener("keydown", (event) => {
+  if (event.target?.id === "doctorMessageBody") {
+    // Enter to send (when not Shift+Enter)
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      const form = document.getElementById("doctorMessageForm");
+      if (form) form.dispatchEvent(new Event("submit"));
+      return;
+    }
+  }
+});
+
+/**
+ * Handle textarea input and auto-resize
+ */
+document.addEventListener("input", (event) => {
+  if (event.target?.id === "doctorMessageBody") {
+    const textarea = event.target;
+    
+    // Clear error on input
+    if (textarea.value.trim()) {
+      textarea.classList.remove("is-invalid");
+      textarea.removeAttribute("aria-invalid");
+    }
+
+    // Auto-resize textarea
+    textarea.style.height = "auto";
+    const newHeight = Math.min(textarea.scrollHeight, 120);
+    textarea.style.height = newHeight + "px";
+  }
+});
 
 function setAvatarContent(el, text) {
   const onlineDot = el.querySelector(".online-dot");
@@ -1227,6 +1556,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "2") showApp("calendar");
   if (e.key === "3") showApp("patients");
   if (e.key === "4") showApp("profile");
+  if (e.key === "5") showApp("doctorMessages");
 });
 
 // 5. PENDING BADGE — update on data change
@@ -1288,6 +1618,7 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "2") showApp("calendar");
     if (e.key === "3") showApp("patients");
     if (e.key === "4") showApp("profile");
+    if (e.key === "5") showApp("doctorMessages");
     if (e.key === "Escape")
       document
         .querySelectorAll(".modal-overlay:not(.hidden)")
