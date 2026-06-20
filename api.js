@@ -2,7 +2,7 @@
 // API Configuration & Service
 // ========================
 
-const BASE_URL = "https://osamarabea-001-site1.jtempurl.com";
+const BASE_URL = "https://anasrabiee-001-site1.ltempurl.com";
 
 function apiAbsoluteUrl(url) {
   if (!url) return "";
@@ -530,21 +530,16 @@ async function completeAppointment(appointmentId, payload) {
       throw new Error("Appointment ID is required");
     }
 
-    const requestPayload = {
-      notes: payload?.notes || "",
-      diseaseDescription: payload?.diseaseDescription || "",
-      diseasesIds: Array.isArray(payload?.diseasesIds)
-        ? payload.diseasesIds
-        : [],
-      medicineIds: Array.isArray(payload?.medicineIds)
-        ? payload.medicineIds
-        : [],
-      dose: payload?.dose || "",
-      form: payload?.form || "",
-      frequency: payload?.frequency || "",
-      days: Number(payload?.days) || 0,
-      timing: payload?.timing || "",
-    };
+  const requestPayload = {
+  notes: payload?.notes || "",
+  diseaseDescription: payload?.diseaseDescription || "",
+  diseasesIds: Array.isArray(payload?.diseasesIds)
+    ? payload.diseasesIds
+    : [],
+  medicines: Array.isArray(payload?.medicines)
+    ? payload.medicines
+    : [],
+};
 
     return await apiRequest(
       `/api/Appointment/complete/${appointmentId}`,

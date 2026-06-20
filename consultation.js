@@ -838,17 +838,19 @@ function buildCompletionPayload() {
     notes: document.getElementById("csNotes")?.value.trim() || "",
     diseaseDescription:
       document.getElementById("csDiseaseDescription")?.value.trim() || "",
+
     diseasesIds: csState.diagnoses
       .map((d) => Number(d.id))
       .filter(Number.isFinite),
-    medicineIds: csState.medications
-      .map((m) => Number(m.id))
-      .filter(Number.isFinite),
-    dose: document.getElementById("medDose")?.value.trim() || "",
-    form: document.getElementById("medForm")?.value.trim() || "",
-    frequency: document.getElementById("medFrequency")?.value.trim() || "",
-    days: toNumber(document.getElementById("medDays")?.value, 0),
-    timing: document.getElementById("medTiming")?.value || "",
+
+    medicines: csState.medications.map((m) => ({
+      medicineId: Number(m.id),
+      dose: m.dose || "",
+      form: m.form || "",
+      frequency: m.frequency || "",
+      days: Number(m.days) || 0,
+      timing: m.timing || "",
+    })),
   };
 }
 
@@ -859,17 +861,17 @@ function validateCompletionPayload(payload) {
   if (!payload.diseasesIds.length) {
     return "Select at least one disease.";
   }
-  if (!payload.medicineIds.length) {
+  if (!payload.medicines.length) {
     return "Select at least one medicine.";
   }
 
   // 🛡️ Use MedicalFormValidator for medication validation
   const medicalErrors = MedicalFormValidator.validate({
-    dose: payload.dose,
-    form: payload.form,
-    frequency: payload.frequency,
-    timing: payload.timing,
-    days: payload.days,
+    dose: payload.medicines[0]?.dose,
+    form: payload.medicines[0]?.form,
+    frequency: payload.medicines[0]?.frequency,
+    timing: payload.medicines[0]?.timing,
+    days: payload.medicines[0]?.days,
   });
 
   if (medicalErrors) {
@@ -932,11 +934,11 @@ async function saveConsultation(e) {
       medications: csState.medications.map((m) =>
         normalizeMedication({
           ...m,
-          dose: payload.dose,
-          form: payload.form,
-          frequency: payload.frequency,
-          timing: payload.timing,
-          days: payload.days,
+          dose: payload.medicines[0]?.dose,
+          form: payload.medicines[0]?.form,
+          frequency: payload.medicines[0]?.frequency,
+          timing: payload.medicines[0]?.timing,
+          days: payload.medicines[0]?.days,
         }),
       ),
       notes: payload.notes,
